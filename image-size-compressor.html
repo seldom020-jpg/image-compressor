@@ -497,58 +497,28 @@
         .total-stats.show {
             display: block;
         }
-
-        .language-switcher {
-            text-align: right;
-            margin-bottom: 15px;
-        }
-
-        .lang-btn {
-            padding: 5px 12px;
-            border: 2px solid #ddd;
-            background: white;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 13px;
-            margin-left: 8px;
-            transition: all 0.3s;
-        }
-
-        .lang-btn:hover {
-            border-color: #667eea;
-        }
-
-        .lang-btn.active {
-            border-color: #667eea;
-            background: #667eea;
-            color: white;
-        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <div class="language-switcher">
-            <button class="lang-btn active" onclick="switchLanguage('zh')">中文</button>
-            <button class="lang-btn" onclick="switchLanguage('en')">English</button>
-        </div>
         <div class="header">
-            <h1 data-lang-zh="🗜️ 图片压缩工具" data-lang-en="🗜️ Image Compressor">🗜️ 图片压缩工具</h1>
-            <p data-lang-zh="上传图片，可指定目标文件大小 + 调整分辨率，自动压缩满足要求" data-lang-en="Upload images, specify target file size and/or resize resolution, compress automatically">上传图片，可指定目标文件大小 + 调整分辨率，自动压缩满足要求</p>
+            <h1>🗜️ 图片压缩工具</h1>
+            <p>上传图片，可指定目标文件大小 + 调整分辨率，自动压缩满足要求</p>
         </div>
 
         <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
             <div class="upload-icon">🖼️</div>
-            <div class="upload-text" data-lang-zh="点击或拖拽图片到这里上传" data-lang-en="Click or drag images to upload">点击或拖拽图片到这里上传</div>
-            <div class="upload-hint" data-lang-zh="支持 JPG、PNG、GIF、WebP 格式，可一次性上传多张图片&lt;br&gt;可同时调整文件大小和分辨率，也可以只调整其中一项" data-lang-en="Supports JPG, PNG, GIF, WebP, multiple images allowed&lt;br&gt;Adjust both file size and resolution, or either one">支持 JPG、PNG、GIF、WebP 格式，可一次性上传多张图片<br>可同时调整文件大小和分辨率，也可以只调整其中一项</div>
+            <div class="upload-text">点击或拖拽图片到这里上传</div>
+            <div class="upload-hint">支持 JPG、PNG、GIF、WebP 格式，可一次性上传多张图片<br>可同时调整文件大小和分辨率，也可以只调整其中一项</div>
         </div>
         <input type="file" id="fileInput" accept="image/*" multiple>
 
         <div class="settings-area" id="settingsArea">
-            <h3 style="margin-bottom: 20px; color: #1e3c72;" data-lang-zh="🎯 设置目标文件大小" data-lang-en="🎯 Target File Size">🎯 设置目标文件大小</h3>
+            <h3 style="margin-bottom: 20px; color: #1e3c72;">🎯 设置目标文件大小</h3>
             
             <div class="form-group">
-                <label data-lang-zh="常用预设：" data-lang-en="Quick Presets:">常用预设：</label>
+                <label>常用预设：</label>
                 <div class="target-size-options">
                     <div class="size-option active" onclick="selectPreset(100, 'KB')">
                         <div>100 KB</div>
@@ -572,9 +542,9 @@
             </div>
 
             <div class="form-group">
-                <label data-lang-zh="自定义大小：" data-lang-en="Custom Size:">自定义大小：</label>
+                <label>自定义大小：</label>
                 <div class="custom-size">
-                    <input type="number" id="customSize" data-lang-zh-placeholder="输入数值" data-lang-en-placeholder="Enter value" placeholder="输入数值" min="1">
+                    <input type="number" id="customSize" placeholder="输入数值" min="1">
                     <select id="customUnit">
                         <option value="KB">KB</option>
                         <option value="MB">MB</option>
@@ -582,13 +552,13 @@
                 </div>
             </div>
 
-            <h3 style="margin: 30px 0 20px 0; color: #1e3c72;" data-lang-zh="📏 设置目标分辨率" data-lang-en="📏 Target Resolution">📏 设置目标分辨率</h3>
+            <h3 style="margin: 30px 0 20px 0; color: #1e3c72;">📏 设置目标分辨率</h3>
 
             <div class="form-group">
-                <label data-lang-zh="常用预设（最大边长）：" data-lang-en="Presets (Max Width):">常用预设（最大边长）：</label>
+                <label>常用预设（最大边长）：</label>
                 <div class="resolution-options">
                     <div class="resolution-option" onclick="selectResolutionPreset('original')">
-                        <div data-lang-zh="保持原图" data-lang-en="Original">保持原图</div>
+                        <div>保持原图</div>
                     </div>
                     <div class="resolution-option active" onclick="selectResolutionPreset(1920)">
                         <div>1920px</div>
@@ -609,46 +579,46 @@
             </div>
 
             <div class="form-group">
-                <label data-lang-zh="自定义最大宽度（像素）：" data-lang-en="Custom Max Width (px):">自定义最大宽度（像素）：</label>
+                <label>自定义最大宽度（像素）：</label>
                 <div class="custom-resolution">
-                    <input type="number" id="customMaxWidth" data-lang-zh-placeholder="留空=使用预设" data-lang-en-placeholder="Empty = use preset" placeholder="留空=使用预设" min="1">
+                    <input type="number" id="customMaxWidth" placeholder="留空=使用预设" min="1">
                 </div>
-                <div class="hint" style="margin-top: 5px; font-size: 12px; color: #666;" data-lang-zh="高度会按比例自动缩放，不填则保持原始分辨率" data-lang-en="Height will scale automatically, leave empty to keep original resolution">高度会按比例自动缩放，不填则保持原始分辨率</div>
+                <div class="hint" style="margin-top: 5px; font-size: 12px; color: #666;">高度会按比例自动缩放，不填则保持原始分辨率</div>
             </div>
 
-            <h3 style="margin: 30px 0 20px 0; color: #1e3c72;" data-lang-zh="⚙️ 其他设置" data-lang-en="⚙️ Other Settings">⚙️ 其他设置</h3>
+            <h3 style="margin: 30px 0 20px 0; color: #1e3c72;">⚙️ 其他设置</h3>
 
             <div class="form-group">
-                <label data-lang-zh="输出格式：" data-lang-en="Output Format:">输出格式：</label>
+                <label>输出格式：</label>
                 <select id="outputFormat" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px;">
-                    <option value="jpeg" data-lang-zh="JPEG（推荐，压缩率高）" data-lang-en="JPEG (Recommended, high compression)">JPEG（推荐，压缩率高）</option>
-                    <option value="png" data-lang-zh="PNG（保真，压缩率低）" data-lang-en="PNG (Lossless, lower compression)">PNG（保真，压缩率低）</option>
-                    <option value="webp" data-lang-zh="WebP（推荐，兼顾大小和质量）" data-lang-en="WebP (Recommended, balanced)">WebP（推荐，兼顾大小和质量）</option>
+                    <option value="jpeg">JPEG（推荐，压缩率高）</option>
+                    <option value="png">PNG（保真，压缩率低）</option>
+                    <option value="webp">WebP（推荐，兼顾大小和质量）</option>
                 </select>
-                <div class="hint" style="margin-top: 5px; font-size: 12px; color: #666;" data-lang-zh="如果需要透明背景，请选择PNG" data-lang-en="Choose PNG for transparent background">如果需要透明背景，请选择PNG</div>
+                <div class="hint" style="margin-top: 5px; font-size: 12px; color: #666;">如果需要透明背景，请选择PNG</div>
             </div>
 
             <div class="form-group">
-                <label data-lang-zh="最大压缩次数：" data-lang-en="Max Compression Attempts:">最大压缩次数：</label>
+                <label>最大压缩次数：</label>
                 <select id="maxIterations" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px;">
-                    <option value="5" data-lang-zh="5次（快速）" data-lang-en="5 times (Fast)">5次（快速）</option>
-                    <option value="8" selected data-lang-zh="8次（平衡）" data-lang-en="8 times (Balanced)">8次（平衡）</option>
-                    <option value="12" data-lang-zh="12次（精确，慢）" data-lang-en="12 times (Precise, Slow)">12次（精确，慢）</option>
+                    <option value="5">5次（快速）</option>
+                    <option value="8" selected>8次（平衡）</option>
+                    <option value="12">12次（精确，慢）</option>
                 </select>
-                <div class="hint" style="margin-top: 5px; font-size: 12px; color: #666;" data-lang-zh="次数越多越可能达到目标大小，但速度越慢" data-lang-en="More attempts = more likely to hit target size, but slower">次数越多越可能达到目标大小，但速度越慢</div>
+                <div class="hint" style="margin-top: 5px; font-size: 12px; color: #666;">次数越多越可能达到目标大小，但速度越慢</div>
             </div>
         </div>
 
         <div class="preview-area" id="previewArea">
-            <h3 style="margin-bottom: 15px; color: #1e3c72;" data-lang-zh="🔍 预览对比" data-lang-en="🔍 Preview Comparison">🔍 预览对比</h3>
+            <h3 style="margin-bottom: 15px; color: #1e3c72;">🔍 预览对比</h3>
             <div class="preview-row">
                 <div class="preview-card">
-                    <h3 data-lang-zh="原始图片" data-lang-en="Original">原始图片</h3>
+                    <h3>原始图片</h3>
                     <img id="originalPreview" class="preview-image">
                     <div id="originalInfo" class="file-info"></div>
                 </div>
                 <div class="preview-card">
-                    <h3 data-lang-zh="压缩后图片" data-lang-en="Compressed">压缩后图片</h3>
+                    <h3>压缩后图片</h3>
                     <img id="compressedPreview" class="preview-image">
                     <div id="compressedInfo" class="file-info"></div>
                 </div>
@@ -659,42 +629,42 @@
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-            <div class="progress-text" id="progressText" data-lang-zh="正在压缩..." data-lang-en="Compressing...">正在压缩...</div>
+            <div class="progress-text" id="progressText">正在压缩...</div>
         </div>
 
         <div class="compression-result" id="compressionResult">
-            <h4 style="color: #1e3c72; margin-bottom: 10px;" data-lang-zh="📊 压缩结果" data-lang-en="📊 Result">📊 压缩结果</h4>
+            <h4 style="color: #1e3c72; margin-bottom: 10px;">📊 压缩结果</h4>
             <div class="result-stats" id="resultStats"></div>
         </div>
 
         <div class="total-stats" id="totalStats">
-            <h4 style="color: #1e3c72; margin-bottom: 10px;" data-lang-zh="📊 批量处理统计" data-lang-en="📊 Batch Stats">📊 批量处理统计</h4>
+            <h4 style="color: #1e3c72; margin-bottom: 10px;">📊 批量处理统计</h4>
             <div id="totalStatsContent"></div>
         </div>
 
         <div class="batch-list" id="batchList">
-            <h3 data-lang-zh="📋 处理列表" data-lang-en="📋 Processing List">📋 处理列表</h3>
+            <h3>📋 处理列表</h3>
             <table class="batch-table">
                 <thead>
                     <tr>
-                        <th data-lang-zh="序号" data-lang-en="#">序号</th>
-                        <th data-lang-zh="文件名" data-lang-en="Filename">文件名</th>
-                        <th data-lang-zh="原始大小" data-lang-en="Original">原始大小</th>
-                        <th data-lang-zh="压缩后" data-lang-en="Compressed">压缩后</th>
-                        <th data-lang-zh="状态" data-lang-en="Status">状态</th>
-                        <th data-lang-zh="操作" data-lang-en="Action">操作</th>
+                        <th>序号</th>
+                        <th>文件名</th>
+                        <th>原始大小</th>
+                        <th>压缩后</th>
+                        <th>状态</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="batchTableBody">
                 </tbody>
             </table>
             <div class="batch-actions" id="batchActions">
-                <button class="btn-zip" id="downloadZipBtn" onclick="downloadAllZip()" data-lang-zh="📦 打包全部下载 ZIP" data-lang-en="📦 Download All ZIP">📦 打包全部下载 ZIP</button>
+                <button class="btn-zip" id="downloadZipBtn" onclick="downloadAllZip()">📦 打包全部下载 ZIP</button>
             </div>
         </div>
 
         <div class="btn-area">
-            <button class="btn btn-primary" id="compressBtn" onclick="startCompression()" disabled data-lang-zh="🔄 开始压缩" data-lang-en="🔄 Start Compression">🔄 开始压缩</button>
+            <button class="btn btn-primary" id="compressBtn" onclick="startCompression()" disabled>🔄 开始压缩</button>
         </div>
     </div>
 
@@ -706,63 +676,12 @@
         let maxWidth = 1920; // 默认最大宽度1920px
         let selectedResolutionPreset = 1920;
         let isProcessingBatch = false;
-        let currentLang = 'zh'; // 当前语言，默认中文
-
-        // 语言切换函数
-        function switchLanguage(lang) {
-            currentLang = lang;
-            localStorage.setItem('image-compressor-lang', lang);
-            
-            // 更新按钮active状态
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.textContent.trim().toLowerCase().includes(lang));
-            });
-            
-            // 更新所有带data-lang-zh属性的元素文本
-            document.querySelectorAll('[data-lang-zh]').forEach(el => {
-                // 如果是button，只替换第一个子节点文本，保留所有属性
-                if (el.tagName === 'BUTTON') {
-                    // 保留按钮本身的所有属性（包括disabled），只换文字
-                    const newText = el.getAttribute('data-lang-' + lang);
-                    // 移除所有孩子，只放新文字
-                    while(el.firstChild) {
-                        el.removeChild(el.firstChild);
-                    }
-                    el.appendChild(document.createTextNode(newText));
-                } else {
-                    // 普通元素直接换innerHTML
-                    el.innerHTML = el.getAttribute('data-lang-' + lang);
-                }
-            });
-            
-            // 更新input placeholder
-            document.querySelectorAll('[data-lang-zh-placeholder]').forEach(el => {
-                el.placeholder = el.getAttribute('data-lang-' + lang + '-placeholder');
-            });
-            
-            // 更新select option文本
-            document.querySelectorAll('option[data-lang-zh]').forEach(option => {
-                option.textContent = option.getAttribute('data-lang-' + lang);
-            });
-            
-            // 重新渲染需要动态更新的内容
-            updateTotalStats();
-        }
-
-        // 页面加载时恢复语言设置
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedLang = localStorage.getItem('image-compressor-lang');
-            if (savedLang && (savedLang === 'zh' || savedLang === 'en')) {
-                switchLanguage(savedLang);
-            }
-        });
 
         // 页面加载时验证域名/在线访问
         window.addEventListener('load', () => {
             // 检查是否离线打开或域名不对
             if (window.location.protocol === 'file:' || !window.location.host) {
-                const msg = {
-                    zh: `
+                document.body.innerHTML = `
                     <div style="max-width: 600px; margin: 100px auto; padding: 30px; background: #fff; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center;">
                         <h1 style="color: #dc3545; margin-bottom: 20px;">🔒 访问受限</h1>
                         <p style="font-size: 16px; line-height: 1.8; margin-bottom: 20px;">
@@ -775,22 +694,7 @@
                             下载离线HTML文件无法使用，感谢理解 🙏
                         </p>
                     </div>
-                `,
-                en: `
-                    <div style="max-width: 600px; margin: 100px auto; padding: 30px; background: #fff; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center;">
-                        <h1 style="color: #dc3545; margin-bottom: 20px;">🔒 Access Restricted</h1>
-                        <p style="font-size: 16px; line-height: 1.8; margin-bottom: 20px;">
-                            This tool requires online access. Please visit our website for full functionality:
-                        </p>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                            <code style="color: #1e3c72; font-size: 14px;">${window.location.origin}/${window.location.pathname}</code>
-                        </div>
-                        <p style="color: #666; font-size: 14px;">
-                            Opening the offline HTML file directly will not work. Thank you for your understanding 🙏
-                        </p>
-                    </div>
-                `};
-                document.body.innerHTML = msg[currentLang];
+                `;
                 return;
             }
         });
@@ -873,17 +777,13 @@
             uploadedFiles.forEach((file, index) => {
                 const row = document.createElement('tr');
                 const sizeKB = (file.size / 1024).toFixed(2);
-                const downloadText = {
-                    'zh': '下载',
-                    'en': 'Download'
-                };
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${file.name}</td>
                     <td>${sizeKB} KB</td>
                     <td id="batch-size-${index}">-</td>
-                    <td id="batch-status-${index}"><span class="batch-status status-waiting">${statusText[currentLang].waiting}</span></td>
-                    <td><a href="#" id="batch-download-${index}" style="display: none;" class="btn-download-small" onclick="downloadSingleBatch(${index}); return false;">${downloadText[currentLang]}</a></td>
+                    <td id="batch-status-${index}"><span class="batch-status status-waiting">等待处理</span></td>
+                    <td><a href="#" id="batch-download-${index}" style="display: none;" class="btn-download-small" onclick="downloadSingleBatch(${index}); return false;">下载</a></td>
                 `;
                 tbody.appendChild(row);
                 
@@ -907,38 +807,22 @@
             const errors = batchResults.filter(r => r.status === 'error').length;
             const processing = batchResults.filter(r => r.status === 'processing').length;
             
-            const labels = {
-                'zh': {
-                    'total': '总张数',
-                    'done': '已完成',
-                    'processing': '处理中',
-                    'errors': '失败'
-                },
-                'en': {
-                    'total': 'Total',
-                    'done': 'Done',
-                    'processing': 'Processing',
-                    'errors': 'Failed'
-                }
-            };
-            const l = labels[currentLang];
-            
             let html = `
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
                     <div style="background: white; padding: 10px; border-radius: 6px; text-align: center;">
-                        <div style="font-size: 11px; color: #666;">${l.total}</div>
+                        <div style="font-size: 11px; color: #666;">总张数</div>
                         <div style="font-size: 18px; font-weight: bold; color: #1e3c72;">${total}</div>
                     </div>
                     <div style="background: white; padding: 10px; border-radius: 6px; text-align: center;">
-                        <div style="font-size: 11px; color: #666;">${l.done}</div>
+                        <div style="font-size: 11px; color: #666;">已完成</div>
                         <div style="font-size: 18px; font-weight: bold; color: #28a745;">${done}</div>
                     </div>
                     <div style="background: white; padding: 10px; border-radius: 6px; text-align: center;">
-                        <div style="font-size: 11px; color: #666;">${l.processing}</div>
+                        <div style="font-size: 11px; color: #666;">处理中</div>
                         <div style="font-size: 18px; font-weight: bold; color: #004085;">${processing}</div>
                     </div>
                     <div style="background: white; padding: 10px; border-radius: 6px; text-align: center;">
-                        <div style="font-size: 11px; color: #666;">${l.errors}</div>
+                        <div style="font-size: 11px; color: #666;">失败</div>
                         <div style="font-size: 18px; font-weight: bold; color: #dc3545;">${errors}</div>
                     </div>
                 </div>
@@ -1133,20 +1017,12 @@
                 'error': 'status-error'
             };
             const statusText = {
-                'zh': {
-                    'waiting': '等待处理',
-                    'processing': '处理中',
-                    'done': '已完成',
-                    'error': '失败'
-                },
-                'en': {
-                    'waiting': 'Waiting',
-                    'processing': 'Processing',
-                    'done': 'Done',
-                    'error': 'Failed'
-                }
+                'waiting': '等待处理',
+                'processing': '处理中',
+                'done': '已完成',
+                'error': '失败'
             };
-            cell.innerHTML = `<span class="batch-status ${statusClass[status]}">${statusText[currentLang][status]}</span>`;
+            cell.innerHTML = `<span class="batch-status ${statusClass[status]}">${statusText[status]}</span>`;
         }
 
         function updateBatchResult(index, blob) {
