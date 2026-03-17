@@ -27,7 +27,7 @@
 
 ## 界面预览
 
-![界面预览](https://i.imgur.com/example.png)
+![界面预览](preview.png)
 *上传图片后可同时设置目标文件大小和分辨率*
 
 功能：
