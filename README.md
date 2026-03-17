@@ -25,9 +25,21 @@
 4. 点击「开始压缩」
 5. 压缩完成后逐张下载或打包全部下载
 
-## 截图
-*(待补充)*
+## 界面预览
+
+![界面预览](https://i.imgur.com/example.png)
+*上传图片后可同时设置目标文件大小和分辨率*
+
+功能：
+- 🎯 指定目标文件大小（KB/MB）
+- 📏 调整分辨率（保持原图/1920/1280/960/640/480 或自定义）
+- 📦 批量处理后打包ZIP下载
+- 🔍 单张压缩后实时预览对比
+
+## 在线使用
+
+直接访问：**https://seldom020-jpg.github.io/image-compressor/image-size-compressor.html**
 
 ## 许可证
 
-MIT
+MIT License - 详见 [LICENSE](LICENSE) 文件
