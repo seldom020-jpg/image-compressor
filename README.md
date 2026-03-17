@@ -39,7 +39,7 @@
 
 ## 在线使用
 
-直接访问：**https://seldom020-jpg.github.io/image-compressor/image-size-compressor.html**
+直接访问：**<https://seldom020-jpg.github.io/image-compressor/image-size-compressor.html>**
 
 ## 许可证
 
