@@ -718,19 +718,21 @@
                 btn.classList.toggle('active', btn.textContent.trim().toLowerCase().includes(lang));
             });
             
-            // 更新所有带data-lang-zh属性的元素文本，保存按钮的disabled状态
+            // 更新所有带data-lang-zh属性的元素文本
             document.querySelectorAll('[data-lang-zh]').forEach(el => {
-                // 保存所有属性状态，disabled比较特殊需要单独保存
-                const isDisabled = el.hasAttribute('disabled');
-                const currentDisabled = el.disabled;
-                el.innerHTML = el.getAttribute('data-lang-' + lang);
-                // 恢复disabled状态
-                if (isDisabled) {
-                    el.setAttribute('disabled', '');
+                // 如果是button，只替换第一个子节点文本，保留所有属性
+                if (el.tagName === 'BUTTON') {
+                    // 保留按钮本身的所有属性（包括disabled），只换文字
+                    const newText = el.getAttribute('data-lang-' + lang);
+                    // 移除所有孩子，只放新文字
+                    while(el.firstChild) {
+                        el.removeChild(el.firstChild);
+                    }
+                    el.appendChild(document.createTextNode(newText));
                 } else {
-                    el.removeAttribute('disabled');
+                    // 普通元素直接换innerHTML
+                    el.innerHTML = el.getAttribute('data-lang-' + lang);
                 }
-                el.disabled = currentDisabled;
             });
             
             // 更新input placeholder
