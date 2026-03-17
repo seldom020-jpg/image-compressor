@@ -720,11 +720,17 @@
             
             // 更新所有带data-lang-zh属性的元素文本，保存按钮的disabled状态
             document.querySelectorAll('[data-lang-zh]').forEach(el => {
-                const wasDisabled = el.disabled;
+                // 保存所有属性状态，disabled比较特殊需要单独保存
+                const isDisabled = el.hasAttribute('disabled');
+                const currentDisabled = el.disabled;
                 el.innerHTML = el.getAttribute('data-lang-' + lang);
-                if (typeof wasDisabled === 'boolean') {
-                    el.disabled = wasDisabled;
+                // 恢复disabled状态
+                if (isDisabled) {
+                    el.setAttribute('disabled', '');
+                } else {
+                    el.removeAttribute('disabled');
                 }
+                el.disabled = currentDisabled;
             });
             
             // 更新input placeholder
