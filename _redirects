@@ -1,1 +1,4 @@
-/* /image-size-compressor.html 200
+# 根目录直接跳转到工具页面
+/ /image-size-compressor.html 302
+# 其他路径也能正常访问
+/image-size-compressor.html /image-size-compressor.html 200
