@@ -824,3 +824,604 @@
  const key = el.getAttribute('data-i18n-placeholder');
  if (i18n[lang][key]) {
  el.placeholder = i18n[lang][key];
+ }
+ });
+
+ // 如果已经有任务数据，刷新UI以应用新语言
+ if (uploadedFiles.length > 0) {
+ renderBatchList();
+ if (uploadedFiles.length === 1 && document.getElementById('previewArea').classList.contains('show')) {
+ handleSingleFilePreview(uploadedFiles[0]);
+ if (batchResults[0] && batchResults[0].status === 'done') {
+ showSingleResult();
+ }
+ }
+ }
+ }
+
+ // 简易翻译获取函数
+ function t(key, args = []) {
+ let text = i18n[currentLang][key] || key;
+ if (args.length > 0) {
+ args.forEach((arg, i) => {
+ text = text.replace(`{${i}}`, arg);
+ });
+ }
+ return text;
+ }
+ // ================= 多语言 i18n 结束 =================
+
+ let uploadedFiles = [];
+ let batchResults = [];
+ let targetSizeBytes = 100 * 1024; // 默认100KB
+ let selectedPreset = {size: 100, unit: 'KB'};
+ let maxWidth = 1920; // 默认最大宽度1920px
+ let selectedResolutionPreset = 1920;
+ let isProcessingBatch = false;
+ let compressedBlob = null;
+ let uploadedFile = null;
+
+ // 页面加载时验证域名/在线访问
+ window.addEventListener('load', () => {
+ // 初始化语言
+ changeLanguage(document.getElementById('langSelect').value);
+
+ // 检查是否离线打开或域名不对
+ if (window.location.protocol === 'file:' || !window.location.host) {
+ document.body.innerHTML = `
+ <div style="max-width: 600px; margin: 100px auto; padding: 30px; background: #fff; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center;">
+ <h1 style="color: #dc3545; margin-bottom: 20px;">🔒 ${t('access restricted')}</h1>
+ <p style="font-size: 16px; line-height: 1.8; margin-bottom: 20px;">
+ ${t('online only')}
+ </p>
+ <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+ <code style="color: #1e3c72; font-size: 14px;">${window.location.origin}/${window.location.pathname}</code>
+ </div>
+ <p style="color: #666; font-size: 14px;">
+ ${t('offline error')}
+ </p>
+ </div>
+ `;
+ return;
+ }
+ });
+
+ // 拖拽上传
+ const uploadArea = document.getElementById('uploadArea');
+ const fileInput = document.getElementById('fileInput');
+
+ uploadArea.addEventListener('dragover', (e) => {
+ e.preventDefault();
+ uploadArea.classList.add('dragover');
+ });
+
+ uploadArea.addEventListener('dragleave', () => {
+ uploadArea.classList.remove('dragover');
+ });
+
+ uploadArea.addEventListener('drop', (e) => {
+ e.preventDefault();
+ uploadArea.classList.remove('dragover');
+ const files = e.dataTransfer.files;
+ if (files.length > 0 && files[0].type.startsWith('image/')) {
+ handleFilesSelect(Array.from(files));
+ }
+ });
+
+ fileInput.addEventListener('change', (e) => {
+ if (e.target.files.length > 0) {
+ handleFilesSelect(Array.from(e.target.files));
+ }
+ });
+
+ function handleFilesSelect(files) {
+ uploadedFiles = files;
+ batchResults = [];
+ 
+ // 显示设置区域
+ document.getElementById('settingsArea').classList.add('show');
+ 
+ // 如果只有一张，显示单张预览
+ if (files.length === 1) {
+ document.getElementById('previewArea').classList.add('show');
+ handleSingleFilePreview(files[0]);
+ } else {
+ document.getElementById('previewArea').classList.remove('show');
+ }
+ 
+ // 显示批量列表
+ renderBatchList();
+ document.getElementById('batchList').classList.add('show');
+ document.getElementById('compressBtn').disabled = false;
+ }
+
+ function handleSingleFilePreview(file) {
+ uploadedFile = file;
+ // 显示原始图片预览
+ const reader = new FileReader();
+ reader.onload = (e) => {
+ document.getElementById('originalPreview').src = e.target.result;
+ 
+ // 显示信息
+ const sizeKB = (file.size / 1024).toFixed(2);
+ const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+ const img = document.getElementById('originalPreview');
+ img.onload = () => {
+ document.getElementById('originalInfo').innerHTML = `
+ ${t('infoFileName')}：${file.name}<br>
+ ${t('infoOrigSize')}：${sizeKB} KB (${sizeMB} MB)<br>
+ ${t('infoDimensions')}：${img.naturalWidth} × ${img.naturalHeight}
+ `;
+ };
+ };
+ reader.readAsDataURL(file);
+ }
+
+ function renderBatchList() {
+ const tbody = document.getElementById('batchTableBody');
+ tbody.innerHTML = '';
+ 
+ uploadedFiles.forEach((file, index) => {
+ const row = document.createElement('tr');
+ const sizeKB = (file.size / 1024).toFixed(2);
+ 
+ // 保留旧状态逻辑如果在处理中
+ let currentStatus = 'waiting';
+ if(batchResults[index]) {
+ currentStatus = batchResults[index].status;
+ }
+
+ const statusClass = {
+ 'waiting': 'status-waiting',
+ 'processing': 'status-processing',
+ 'done': 'status-done',
+ 'error': 'status-error'
+ };
+ 
+ const statusTextMap = {
+ 'waiting': t('statusWaiting'),
+ 'processing': t('statusProcessing'),
+ 'done': t('statusDone'),
+ 'error': t('statusError')
+ };
+
+ row.innerHTML = `
+ <td>${index + 1}</td>
+ <td>${file.name}</td>
+ <td>${sizeKB} KB</td>
+ <td id="batch-size-${index}">${batchResults[index] && batchResults[index].blob ? formatBytes(batchResults[index].blob.size) : '-'}</td>
+ <td id="batch-status-${index}"><span class="batch-status ${statusClass[currentStatus]}">${statusTextMap[currentStatus]}</span></td>
+ <td><a href="#" id="batch-download-${index}" style="display: ${currentStatus === 'done' ? 'inline' : 'none'};" class="btn-download-small" onclick="downloadSingleBatch(${index}); return false;">${t('btnDownload')}</a></td>
+ `;
+ tbody.appendChild(row);
+ 
+ if(!batchResults[index]) {
+ // 初始化结果
+ batchResults.push({
+ file: file,
+ blob: null,
+ status: 'waiting',
+ compressedSize: null
+ });
+ }
+ });
+ 
+ // 显示统计
+ updateTotalStats();
+ document.getElementById('totalStats').classList.add('show');
+ }
+
+ function updateTotalStats() {
+ const total = uploadedFiles.length;
+ const done = batchResults.filter(r => r.status === 'done').length;
+ const errors = batchResults.filter(r => r.status === 'error').length;
+ const processing = batchResults.filter(r => r.status === 'processing').length;
+ 
+ let html = `
+ <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+ <div style="background: white; padding: 10px; border-radius: 6px; text-align: center;">
+ <div style="font-size: 11px; color: #666;">${t('statTotal')}</div>
+ <div style="font-size: 18px; font-weight: bold; color: #1e3c72;">${total}</div>
+ </div>
+ <div style="background: white; padding: 10px; border-radius: 6px; text-align: center;">
+ <div style="font-size: 11px; color: #666;">${t('statusDone')}</div>
+ <div style="font-size: 18px; font-weight: bold; color: #28a745;">${done}</div>
+ </div>
+ <div style="background: white; padding: 10px; border-radius: 6px; text-align: center;">
+ <div style="font-size: 11px; color: #666;">${t('statusProcessing')}</div>
+ <div style="font-size: 18px; font-weight: bold; color: #004085;">${processing}</div>
+ </div>
+ <div style="background: white; padding: 10px; border-radius: 6px; text-align: center;">
+ <div style="font-size: 11px; color: #666;">${t('statusError')}</div>
+ <div style="font-size: 18px; font-weight: bold; color: #dc3545;">${errors}</div>
+ </div>
+ </div>
+ `;
+ 
+ document.getElementById('totalStatsContent').innerHTML = html;
+ 
+ // 全部完成后显示打包下载
+ if (done === total && total > 1) {
+ document.getElementById('batchActions').classList.add('show');
+ } else {
+ document.getElementById('batchActions').classList.remove('show');
+ }
+ }
+
+ function selectPreset(size, unit) {
+ document.querySelectorAll('.size-option').forEach(el => el.classList.remove('active'));
+ event.target.closest('.size-option').classList.add('active');
+ selectedPreset = {size, unit};
+ updateTargetSize();
+ }
+
+ function updateTargetSize() {
+ const customSize = document.getElementById('customSize').value;
+ const customUnit = document.getElementById('customUnit').value;
+ 
+ if (customSize) {
+ const size = parseFloat(customSize);
+ const unit = customUnit;
+ if (unit === 'KB') {
+ targetSizeBytes = size * 1024;
+ } else {
+ targetSizeBytes = size * 1024 * 1024;
+ }
+ } else {
+ const size = selectedPreset.size;
+ const unit = selectedPreset.unit;
+ if (unit === 'KB') {
+ targetSizeBytes = size * 1024;
+ } else {
+ targetSizeBytes = size * 1024 * 1024;
+ }
+ }
+ }
+
+ document.getElementById('customSize').addEventListener('input', updateTargetSize);
+ document.getElementById('customUnit').addEventListener('change', updateTargetSize);
+
+ function selectResolutionPreset(preset) {
+ document.querySelectorAll('.resolution-option').forEach(el => el.classList.remove('active'));
+ event.target.closest('.resolution-option').classList.add('active');
+ selectedResolutionPreset = preset;
+ updateMaxWidth();
+ }
+
+ function updateMaxWidth() {
+ const customMaxWidth = document.getElementById('customMaxWidth').value;
+ 
+ if (customMaxWidth) {
+ maxWidth = parseInt(customMaxWidth);
+ } else if (selectedResolutionPreset === 'original') {
+ maxWidth = null;
+ } else {
+ maxWidth = selectedResolutionPreset;
+ }
+ }
+
+ document.getElementById('customMaxWidth').addEventListener('input', updateMaxWidth);
+
+ function formatBytes(bytes) {
+ if (bytes < 1024) {
+ return bytes + ' B';
+ } else if (bytes < 1024 * 1024) {
+ return (bytes / 1024).toFixed(2) + ' KB';
+ } else {
+ return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+ }
+ }
+
+ async function startCompression() {
+ updateTargetSize();
+ updateMaxWidth();
+ 
+ if (uploadedFiles.length === 0) {
+ alert(t('alertNoImage'));
+ return;
+ }
+
+ isProcessingBatch = true;
+ document.getElementById('progressArea').classList.add('show');
+ document.getElementById('compressionResult').classList.remove('show');
+ document.getElementById('compressBtn').disabled = true;
+ 
+ const outputFormat = document.getElementById('outputFormat').value;
+ const maxIterations = parseInt(document.getElementById('maxIterations').value);
+
+ try {
+ if (uploadedFiles.length === 1) {
+ updateBatchStatus(0, 'processing');
+ updateTotalStats();
+ 
+ compressedBlob = await compressImageToSize(
+ uploadedFiles[0], 
+ targetSizeBytes, 
+ outputFormat, 
+ maxIterations,
+ (progress, currentQuality, currentSize) => {
+ document.getElementById('progressFill').style.width = progress + '%';
+ document.getElementById('progressText').textContent = 
+ t('iterProgress', [Math.round(currentQuality * 100), formatBytes(currentSize), formatBytes(targetSizeBytes)]);
+ }
+ );
+ batchResults[0].blob = compressedBlob;
+ batchResults[0].status = 'done';
+ updateBatchResult(0, compressedBlob);
+ 
+ document.getElementById('previewArea').classList.add('show');
+ showSingleResult();
+ } else {
+ let processed = 0;
+ for (let i = 0; i < uploadedFiles.length; i++) {
+ updateBatchStatus(i, 'processing');
+ updateTotalStats();
+ 
+ document.getElementById('progressFill').style.width = (processed + 1) / uploadedFiles.length * 100 + '%';
+ document.getElementById('progressText').textContent = 
+ t('batchProgress', [processed + 1, uploadedFiles.length, uploadedFiles[i].name]);
+ 
+ try {
+ const blob = await compressImageToSize(
+ uploadedFiles[i],
+ targetSizeBytes,
+ outputFormat,
+ maxIterations,
+ () => {} // 批量时隐藏具体细节进度
+ );
+ batchResults[i].blob = blob;
+ batchResults[i].status = 'done';
+ updateBatchResult(i, blob);
+ } catch (error) {
+ batchResults[i].status = 'error';
+ updateBatchStatus(i, 'error');
+ console.error(t('compressFailed'), error);
+ }
+ 
+ processed++;
+ updateTotalStats();
+ }
+ 
+ // 批量完成后显示第一张
+ if (batchResults.length > 0 && batchResults[0].status === 'done') {
+ compressedBlob = batchResults[0].blob;
+ handleSingleFilePreview(uploadedFiles[0]);
+ document.getElementById('compressedPreview').src = URL.createObjectURL(compressedBlob);
+ document.getElementById('previewArea').classList.add('show');
+ showSingleResult();
+ }
+ }
+
+ } catch (error) {
+ console.error(t('compressFailed'), error);
+ alert(t('compressFailed') + " " + error.message);
+ } finally {
+ document.getElementById('progressArea').classList.remove('show');
+ document.getElementById('compressBtn').disabled = false;
+ isProcessingBatch = false;
+ }
+ }
+
+ function updateBatchStatus(index, status) {
+ batchResults[index].status = status;
+ const cell = document.getElementById(`batch-status-${index}`);
+ const statusClass = {
+ 'waiting': 'status-waiting',
+ 'processing': 'status-processing',
+ 'done': 'status-done',
+ 'error': 'status-error'
+ };
+ const statusTextMap = {
+ 'waiting': t('statusWaiting'),
+ 'processing': t('statusProcessing'),
+ 'done': t('statusDone'),
+ 'error': t('statusError')
+ };
+ cell.innerHTML = `<span class="batch-status ${statusClass[status]}">${statusTextMap[status]}</span>`;
+ }
+
+ function updateBatchResult(index, blob) {
+ const sizeCell = document.getElementById(`batch-size-${index}`);
+ sizeCell.textContent = formatBytes(blob.size);
+ 
+ updateBatchStatus(index, 'done');
+ 
+ const downloadLink = document.getElementById(`batch-download-${index}`);
+ downloadLink.style.display = 'inline';
+ downloadLink.innerText = t('btnDownload');
+ 
+ updateTotalStats();
+ if (batchResults.every(r => r.status === 'done' || r.status === 'error')) {
+ document.getElementById('batchActions').classList.add('show');
+ }
+ }
+
+ function downloadSingleBatch(index) {
+ const result = batchResults[index];
+ if (!result.blob) return;
+ 
+ const originalName = result.file.name;
+ const outputFormat = document.getElementById('outputFormat').value;
+ let ext = outputFormat === 'jpeg' ? 'jpg' : outputFormat;
+ const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
+ const downloadName = `${nameWithoutExt}_compressed.${ext}`;
+ 
+ const url = URL.createObjectURL(result.blob);
+ const a = document.createElement('a');
+ a.href = url;
+ a.download = downloadName;
+ a.click();
+ URL.revokeObjectURL(url);
+ }
+
+ async function downloadAllZip() {
+ if (typeof JSZip === 'undefined') {
+ await new Promise(resolve => setTimeout(resolve, 1000));
+ if (typeof JSZip === 'undefined') {
+ alert(t('zipError'));
+ return;
+ }
+ }
+ 
+ const zip = new JSZip();
+ const outputFormat = document.getElementById('outputFormat').value;
+ let ext = outputFormat === 'jpeg' ? 'jpg' : outputFormat;
+ 
+ batchResults.forEach((result, index) => {
+ if (result.status === 'done' && result.blob) {
+ const originalName = result.file.name;
+ const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
+ const fileName = `${nameWithoutExt}_compressed.${ext}`;
+ zip.file(fileName, result.blob);
+ }
+ });
+ 
+ const content = await zip.generateAsync({type: 'blob'});
+ const url = URL.createObjectURL(content);
+ const a = document.createElement('a');
+ a.href = url;
+ a.download = `compressed-images-${new Date().getTime()}.zip`;
+ a.click();
+ URL.revokeObjectURL(url);
+ }
+
+ function showSingleResult() {
+ if (!compressedBlob) return;
+ 
+ document.getElementById('compressionResult').classList.add('show');
+ 
+ const originalSize = uploadedFiles[0].size;
+ const compressedSize = compressedBlob.size;
+ const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+ const outputFormat = document.getElementById('outputFormat').value;
+ 
+ const originalWidth = document.getElementById('originalPreview').naturalWidth;
+ const originalHeight = document.getElementById('originalPreview').naturalHeight;
+ 
+ let outputWidth = originalWidth;
+ let outputHeight = originalHeight;
+ if (maxWidth && originalWidth > maxWidth) {
+ const ratio = originalHeight / originalWidth;
+ outputWidth = maxWidth;
+ outputHeight = Math.round(maxWidth * ratio);
+ }
+ 
+ let resolutionText = `${outputWidth} × ${outputHeight}`;
+ if (outputWidth === originalWidth && outputHeight === originalHeight) {
+ resolutionText += t('originalText');
+ }
+ 
+ document.getElementById('compressedInfo').innerHTML = `
+ ${t('infoSize')}：${formatBytes(compressedSize)}<br>
+ ${t('infoRes')}：${resolutionText}<br>
+ ${t('infoRatio')}：${compressionRatio}%<br>
+ ${t('infoFormat')}：${outputFormat.toUpperCase()}
+ `;
+ 
+ const url = URL.createObjectURL(compressedBlob);
+ document.getElementById('compressedPreview').src = url;
+ 
+ const stats = [
+ { label: t('infoOrigSize'), value: formatBytes(originalSize) },
+ { label: t('statTargetSize'), value: formatBytes(targetSizeBytes) },
+ { label: t('thCompSize'), value: formatBytes(compressedSize), success: true },
+ { label: t('statReduced'), value: compressionRatio + '%' }
+ ];
+ 
+ if (outputWidth !== originalWidth) {
+ stats.push({ 
+ label: t('infoRes'), 
+ value: `${originalWidth}×${originalHeight} → ${outputWidth}×${outputHeight}`
+ });
+ }
+ 
+ const html = stats.map(s => `
+ <div class="stat-box">
+ <div class="stat-label">${s.label}</div>
+ <div class="stat-value${s.success ? ' success' : ''}">${s.value}</div>
+ </div>
+ `).join('');
+ 
+ document.getElementById('resultStats').innerHTML = html;
+ }
+
+ async function compressImageToSize(file, targetSizeBytes, outputFormat, maxIterations, onProgress) {
+ const img = await loadImage(file);
+ let quality = 0.9;
+ let minQuality = 0.1;
+ let maxQuality = 1.0;
+ let currentBlob = null;
+ let bestBlob = null;
+ let bestSizeDiff = Infinity;
+
+ for (let i = 0; i < maxIterations; i++) {
+ currentBlob = await canvasResizeAndCompress(img, quality, outputFormat);
+ const currentSize = currentBlob.size;
+ const sizeDiff = targetSizeBytes - currentSize;
+ 
+ if (currentSize <= targetSizeBytes && targetSizeBytes - currentSize < bestSizeDiff) {
+ bestSizeDiff = targetSizeBytes - currentSize;
+ bestBlob = currentBlob;
+ }
+ 
+ if (currentSize > targetSizeBytes) {
+ maxQuality = quality;
+ quality = (minQuality + quality) / 2;
+ } else {
+ minQuality = quality;
+ quality = (quality + maxQuality) / 2;
+ }
+ 
+ onProgress((i + 1) / maxIterations * 100, quality, currentSize);
+ 
+ if (bestBlob && Math.abs((bestBlob.size - targetSizeBytes) / targetSizeBytes) < 0.1) {
+ break;
+ }
+ }
+ return bestBlob || currentBlob;
+ }
+
+ function loadImage(file) {
+ return new Promise((resolve, reject) => {
+ const img = new Image();
+ img.onload = () => resolve(img);
+ img.onerror = reject;
+ img.src = URL.createObjectURL(file);
+ });
+ }
+
+ function canvasResizeAndCompress(img, quality, outputFormat) {
+ return new Promise((resolve) => {
+ const canvas = document.createElement('canvas');
+ let targetWidth = img.naturalWidth;
+ let targetHeight = img.naturalHeight;
+ 
+ if (maxWidth && img.naturalWidth > maxWidth) {
+ const ratio = img.naturalHeight / img.naturalWidth;
+ targetWidth = maxWidth;
+ targetHeight = Math.round(maxWidth * ratio);
+ }
+ 
+ canvas.width = targetWidth;
+ canvas.height = targetHeight;
+ 
+ const ctx = canvas.getContext('2d');
+ if (outputFormat === 'jpeg') {
+ ctx.fillStyle = 'white';
+ ctx.fillRect(0, 0, canvas.width, canvas.height);
+ }
+ ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+ 
+ const mime = outputFormat === 'jpeg' ? 'image/jpeg' :
+ outputFormat === 'png' ? 'image/png' : 'image/webp';
+ 
+ canvas.toBlob((blob) => {
+ resolve(blob);
+ URL.revokeObjectURL(img.src);
+ }, mime, quality);
+ });
+ }
+
+ </script>
+</body>
+</html>
