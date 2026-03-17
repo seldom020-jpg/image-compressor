@@ -718,9 +718,13 @@
                 btn.classList.toggle('active', btn.textContent.trim().toLowerCase().includes(lang));
             });
             
-            // 更新所有带data-lang-zh属性的元素文本
+            // 更新所有带data-lang-zh属性的元素文本，保存按钮的disabled状态
             document.querySelectorAll('[data-lang-zh]').forEach(el => {
+                const wasDisabled = el.disabled;
                 el.innerHTML = el.getAttribute('data-lang-' + lang);
+                if (typeof wasDisabled === 'boolean') {
+                    el.disabled = wasDisabled;
+                }
             });
             
             // 更新input placeholder
