@@ -768,6 +768,18 @@
         // Google OAuth 配置和状态
         let currentUser = null;
         
+        // Google One Tap 初始化
+        function initGoogleLogin() {
+            google.accounts.id.initialize({
+                client_id: '180247334590-dmvoormlch332sagduvrv0cegeq07qcv.apps.googleusercontent.com',
+                callback: handleCredentialResponse
+            });
+            google.accounts.id.renderButton(
+                document.querySelector('.g_id_signin'),
+                { theme: 'outline', size: 'large' }
+            );
+        }
+        
         // 检查是否已经登录
         function checkAuth() {
             const savedUser = localStorage.getItem('googleUser');
@@ -847,8 +859,11 @@
             document.getElementById('loginPromptOverlay').classList.remove('show');
         }
 
-        // 页面加载时检查认证状态
-        document.addEventListener('DOMContentLoaded', checkAuth);
+        // 页面加载时检查认证状态 + 初始化 Google 登录
+        document.addEventListener('DOMContentLoaded', function() {
+            initGoogleLogin();
+            checkAuth();
+        });
 
         let uploadedFiles = [];
         let uploadedFiles = [];
