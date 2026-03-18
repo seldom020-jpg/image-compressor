@@ -499,9 +499,103 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        /* Google Login Styles */
+        .login-area {
+            text-align: right;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .login-area.logged-in {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+        .user-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        .btn-logout {
+            padding: 6px 16px;
+            border: 1px solid #dc3545;
+            background: white;
+            color: #dc3545;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .btn-logout:hover {
+            background: #dc3545;
+            color: white;
+        }
+        .g_id_signin {
+            display: inline-block;
+        }
+        .content-area.locked {
+            opacity: 0.3;
+            pointer-events: none;
+            filter: blur(2px);
+        }
+        .login-prompt {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .login-prompt.show {
+            display: block;
+        }
+        .login-prompt h2 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+        }
+        .login-prompt p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
+        <div class="login-area" id="loginArea">
+            <div id="loginPromptBox">
+                <div id="g_id_onload"
+                     data-client_id="180247334590-dmvoormlch332sagduvrv0cegeq07qcv.apps.googleusercontent.com"
+                     data-callback="handleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-size="large"
+                     data-theme="outline"
+                     data-text="sign_in_with"
+                     data-shape="rectangular"
+                     data-logo_alignment="left">
+                </div>
+            </div>
+            <div id="userInfoBox" style="display: none;"></div>
+        </div>
+
+        <div class="login-prompt" id="loginPromptOverlay">
+            <h2>请登录后使用</h2>
+            <p>这是一个需要登录才能使用的图片压缩工具，请使用 Google 账号登录继续</p>
+        </div>
+
+        <div class="content-area" id="contentArea">
         <div class="header">
             <h1>🗜️ 图片压缩工具</h1>
             <p>上传图片，可指定目标文件大小 + 调整分辨率，自动压缩满足要求</p>
@@ -667,8 +761,95 @@
             <button class="btn btn-primary" id="compressBtn" onclick="startCompression()" disabled>🔄 开始压缩</button>
         </div>
     </div>
+    </div>
 
     <script>
+        // Google OAuth 配置和状态
+        let currentUser = null;
+        
+        // 检查是否已经登录
+        function checkAuth() {
+            const savedUser = localStorage.getItem('googleUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showLoggedInUser();
+                unlockContent();
+            } else {
+                lockContent();
+            }
+        }
+
+        // 解析 JWT token
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+                    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+                ).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Google 登录回调
+        function handleCredentialResponse(response) {
+            const payload = parseJwt(response.credential);
+            if (payload) {
+                currentUser = {
+                    id: payload.sub,
+                    name: payload.name,
+                    email: payload.email,
+                    picture: payload.picture,
+                    credential: response.credential
+                };
+                localStorage.setItem('googleUser', JSON.stringify(currentUser));
+                showLoggedInUser();
+                unlockContent();
+            }
+        }
+
+        // 显示已登录用户信息
+        function showLoggedInUser() {
+            document.getElementById('loginPromptBox').style.display = 'none';
+            document.getElementById('userInfoBox').style.display = 'block';
+            document.getElementById('loginArea').classList.add('logged-in');
+            document.getElementById('userInfoBox').innerHTML = `
+                <div class="user-info">
+                    <img src="${currentUser.picture}" class="user-avatar" alt="${currentUser.name}">
+                    <span class="user-name">${currentUser.name}</span>
+                    <button class="btn-logout" onclick="logout()">退出登录</button>
+                </div>
+            `;
+        }
+
+        // 退出登录
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('googleUser');
+            document.getElementById('loginPromptBox').style.display = 'block';
+            document.getElementById('userInfoBox').style.display = 'none';
+            document.getElementById('loginArea').classList.remove('logged-in');
+            lockContent();
+        }
+
+        // 锁定内容（未登录）
+        function lockContent() {
+            document.getElementById('contentArea').classList.add('locked');
+            document.getElementById('loginPromptOverlay').classList.add('show');
+        }
+
+        // 解锁内容（已登录）
+        function unlockContent() {
+            document.getElementById('contentArea').classList.remove('locked');
+            document.getElementById('loginPromptOverlay').classList.remove('show');
+        }
+
+        // 页面加载时检查认证状态
+        document.addEventListener('DOMContentLoaded', checkAuth);
+
+        let uploadedFiles = [];
         let uploadedFiles = [];
         let batchResults = [];
         let targetSizeBytes = 100 * 1024; // 默认100KB
