@@ -1641,6 +1641,40 @@
                     }
                 }
 
+                // 消耗配额并保存历史记录 - 移到try内部确保所有await正确
+                for (let i = 0; i < uploadedFiles.length; i++) {
+                    if (batchResults[i].status === 'done' && batchResults[i].blob) {
+                        // 消耗一次配额（每张图片算一次）
+                        await consumeQuota();
+
+                        // 保存到历史记录
+                        const file = uploadedFiles[i];
+                        const blob = batchResults[i].blob;
+                        const originalSize = file.size;
+                        const compressedSize = blob.size;
+                        const outputFormat = document.getElementById('outputFormat').value;
+                        let ext = outputFormat === 'jpeg' ? 'jpg' : outputFormat;
+                        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+                        const downloadName = `${nameWithoutExt}_compressed.${ext}`;
+                        const mime = outputFormat === 'jpeg' ? 'image/jpeg' : 
+                                   outputFormat === 'png' ? 'image/png' : 'image/webp';
+
+                        await saveCompressionHistory({
+                            fileName: file.name,
+                            originalSize: originalSize,
+                            compressedSize: compressedSize,
+                            downloadName: downloadName,
+                            mimeType: mime,
+                            blob: blob
+                        });
+                    }
+                }
+
+                // 保存最后设置
+                saveLastSettings();
+                // 更新配额显示
+                renderUserProfile();
+
             } catch (error) {
                 console.error('压缩失败:', error);
                 alert('压缩失败: ' + error.message);
@@ -1649,40 +1683,6 @@
                 document.getElementById('compressBtn').disabled = false;
                 isProcessingBatch = false;
             }
-
-            // 消耗配额并保存历史记录
-            for (let i = 0; i < uploadedFiles.length; i++) {
-                if (batchResults[i].status === 'done' && batchResults[i].blob) {
-                    // 消耗一次配额（每张图片算一次）
-                    await consumeQuota();
-
-                    // 保存到历史记录
-                    const file = uploadedFiles[i];
-                    const blob = batchResults[i].blob;
-                    const originalSize = file.size;
-                    const compressedSize = blob.size;
-                    const outputFormat = document.getElementById('outputFormat').value;
-                    let ext = outputFormat === 'jpeg' ? 'jpg' : outputFormat;
-                    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
-                    const downloadName = `${nameWithoutExt}_compressed.${ext}`;
-                    const mime = outputFormat === 'jpeg' ? 'image/jpeg' : 
-                               outputFormat === 'png' ? 'image/png' : 'image/webp';
-
-                    await saveCompressionHistory({
-                        fileName: file.name,
-                        originalSize: originalSize,
-                        compressedSize: compressedSize,
-                        downloadName: downloadName,
-                        mimeType: mime,
-                        blob: blob
-                    });
-                }
-            }
-
-            // 保存最后设置
-            saveLastSettings();
-            // 更新配额显示
-            renderUserProfile();
         }
 
         function updateBatchStatus(index, status) {
