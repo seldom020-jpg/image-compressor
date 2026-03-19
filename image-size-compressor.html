@@ -2298,10 +2298,10 @@
                 remaining -= 1;
             }
 
-            updateUserStats('set', 'remainingFreeQuota', remaining);
-            updateQuotaWarning();
+            await updateUserStats('set', 'remainingFreeQuota', remaining);
+            await updateQuotaWarning();
             if (currentUser) {
-                renderUserProfile();
+                await renderUserProfile();
             }
         }
 
@@ -2579,17 +2579,20 @@
 
         // 页面加载初始化
         document.addEventListener('DOMContentLoaded', function() {
-            initDB().then(async () => {
+            initDB().then(async (initializedDB) => {
+                db = initializedDB;
                 console.log('IndexedDB initialized');
                 // 确保新用户有默认统计数据（30次免费额度）
                 const stats = await getUserStats();
-                if (stats.remainingFreeQuota === undefined) {
+                if (stats.remainingFreeQuota === undefined || stats.remainingFreeQuota === null) {
                     await updateUserStats('set', 'remainingFreeQuota', 30);
                     await updateUserStats('set', 'isPro', false);
                     await updateUserStats('set', 'totalImages', 0);
                     await updateUserStats('set', 'totalSavedBytes', 0);
                 }
                 await updateQuotaWarning();
+            }).catch(err => {
+                console.error('DB init error:', err);
             });
 
             // 加载偏好设置到UI
