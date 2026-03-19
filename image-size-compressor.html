@@ -1222,6 +1222,10 @@
                 currentUser = JSON.parse(savedUser);
                 showLoggedInUser();
                 unlockContent();
+                // 登录后更新配额显示
+                setTimeout(() => {
+                    updateQuotaWarning();
+                }, 500);
             } else {
                 lockContent();
             }
