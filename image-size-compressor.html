@@ -498,6 +498,432 @@
         .total-stats.show {
             display: block;
         }
+
+        /* 个人中心样式 */
+        .user-menu-btn {
+            padding: 6px 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .user-menu-btn:hover {
+            background: #5568d3;
+        }
+
+        /* 模态框遮罩 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #1e3c72;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            line-height: 1;
+        }
+        .modal-close:hover {
+            color: #333;
+        }
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        /* 用户概览卡片 */
+        .user-profile-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        .user-profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .user-profile-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 20px;
+            color: #333;
+        }
+        .user-profile-info p {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .user-stats {
+            display: flex;
+            gap: 15px;
+        }
+        .user-stat-item {
+            text-align: center;
+            padding: 8px 15px;
+            background: white;
+            border-radius: 6px;
+        }
+        .user-stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .user-stat-value.unlimited {
+            color: #28a745;
+        }
+        .user-stat-value.low {
+            color: #dc3545;
+        }
+        .user-stat-label {
+            font-size: 11px;
+            color: #666;
+        }
+
+        /* 用户会员等级标签 */
+        .user-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        .badge-free {
+            background: #e9ecef;
+            color: #666;
+        }
+        .badge-pro {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        /* 购买会员弹窗 */
+        .quota-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .quota-warning.show {
+            display: block;
+        }
+        .quota-warning h4 {
+            color: #856404;
+            margin: 0 0 8px 0;
+        }
+        .quota-warning p {
+            color: #856404;
+            margin: 0;
+            font-size: 14px;
+        }
+        .btn-upgrade {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .btn-upgrade:hover {
+            opacity: 0.9;
+        }
+
+        /* 支付二维码弹窗 */
+        .payment-modal {
+            text-align: center;
+            padding: 20px;
+        }
+        .payment-qrcode {
+            width: 256px;
+            height: 256px;
+            margin: 20px auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+            display: inline-block;
+        }
+        .payment-qrcode img {
+            width: 100%;
+            height: 100%;
+        }
+        .payment-info {
+            margin-bottom: 15px;
+        }
+        .payment-info h3 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+        .payment-price {
+            font-size: 32px;
+            font-weight: bold;
+            color: #f5576c;
+        }
+        .payment-desc {
+            color: #666;
+            margin-top: 10px;
+        }
+        .payment-hint {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+            margin-top: 15px;
+        }
+
+        /* 标签页 */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+        }
+        .tab-item {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            color: #666;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+        .tab-item:hover {
+            color: #667eea;
+            background: #f8f9fa;
+        }
+        .tab-item.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 历史记录表格 */
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .history-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+            border-bottom: 2px solid #ddd;
+        }
+        .history-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+        .history-table tr:hover {
+            background: #f0f5ff;
+        }
+        .btn-download-history {
+            padding: 4px 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-download-history:hover {
+            background: #218838;
+        }
+        .btn-delete-history {
+            padding: 4px 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .btn-delete-history:hover {
+            background: #c82333;
+        }
+        .empty-history {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        .empty-history p {
+            margin: 0;
+        }
+
+        /* 偏好设置 */
+        .preferences-form {
+            display: grid;
+            gap: 20px;
+        }
+        .preference-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .preference-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 15px;
+            color: #333;
+        }
+        .preference-info p {
+            margin: 0;
+            font-size: 13px;
+            color: #666;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* 清除数据按钮 */
+        .danger-zone {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff5f5;
+            border: 1px solid #dc3545;
+            border-radius: 8px;
+        }
+        .danger-zone h4 {
+            margin: 0 0 10px 0;
+            color: #dc3545;
+        }
+        .danger-zone p {
+            margin: 0 0 15px 0;
+            font-size: 13px;
+            color: #666;
+        }
+        .btn-clear-data {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-clear-data:hover {
+            background: #c82333;
+        }
+
+        /* 关于页面 */
+        .about-section {
+            line-height: 1.8;
+            color: #666;
+        }
+        .about-section h4 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .feature-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 14px;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
@@ -597,6 +1023,13 @@
         </div>
 
         <div class="content-area" id="contentArea">
+        <!-- 配额警告 -->
+        <div class="quota-warning" id="quotaWarning">
+            <h4>⚠️ 免费额度已用完</h4>
+            <p>您已用完赠送的 30 次免费压缩额度。升级到终身会员即可无限次使用。</p>
+            <button class="btn-upgrade" onclick="openUpgradeModal()">立即升级 - 只需 $9.9</button>
+        </div>
+
         <div class="header">
             <h1>🗜️ 图片压缩工具</h1>
             <p>上传图片，可指定目标文件大小 + 调整分辨率，自动压缩满足要求</p>
@@ -832,6 +1265,7 @@
                 <div class="user-info">
                     <img src="${currentUser.picture}" class="user-avatar" alt="${currentUser.name}">
                     <span class="user-name">${currentUser.name}</span>
+                    <button class="user-menu-btn" onclick="openUserCenter()">个人中心</button>
                     <button class="btn-logout" onclick="logout()">退出登录</button>
                 </div>
             `;
@@ -1114,6 +1548,13 @@
         async function startCompression() {
             updateTargetSize();
             updateMaxWidth();
+
+            // 检查配额
+            if (!await hasRemainingQuota()) {
+                alert('免费额度已用完，请升级会员后继续使用');
+                openUpgradeModal();
+                return;
+            }
             
             if (uploadedFiles.length === 0) {
                 alert('请先上传图片');
@@ -1201,6 +1642,40 @@
                 document.getElementById('compressBtn').disabled = false;
                 isProcessingBatch = false;
             }
+
+            // 消耗配额并保存历史记录
+            for (let i = 0; i < uploadedFiles.length; i++) {
+                if (batchResults[i].status === 'done' && batchResults[i].blob) {
+                    // 消耗一次配额（每张图片算一次）
+                    await consumeQuota();
+
+                    // 保存到历史记录
+                    const file = uploadedFiles[i];
+                    const blob = batchResults[i].blob;
+                    const originalSize = file.size;
+                    const compressedSize = blob.size;
+                    const outputFormat = document.getElementById('outputFormat').value;
+                    let ext = outputFormat === 'jpeg' ? 'jpg' : outputFormat;
+                    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+                    const downloadName = `${nameWithoutExt}_compressed.${ext}`;
+                    const mime = outputFormat === 'jpeg' ? 'image/jpeg' : 
+                               outputFormat === 'png' ? 'image/png' : 'image/webp';
+
+                    await saveCompressionHistory({
+                        fileName: file.name,
+                        originalSize: originalSize,
+                        compressedSize: compressedSize,
+                        downloadName: downloadName,
+                        mimeType: mime,
+                        blob: blob
+                    });
+                }
+            }
+
+            // 保存最后设置
+            saveLastSettings();
+            // 更新配额显示
+            renderUserProfile();
         }
 
         function updateBatchStatus(index, status) {
@@ -1484,7 +1959,662 @@
             document.getElementById('resultStats').innerHTML = html;
         }
 
+        // ============ 用户中心和数据存储功能 ============
+
+        // 初始化 IndexedDB 存储压缩历史
+        let db;
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('ImageCompressorDB', 1);
+                request.onerror = reject;
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    if (!db.objectStoreNames.contains('compressionHistory')) {
+                        db.createObjectStore('compressionHistory', { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains('userStats')) {
+                        db.createObjectStore('userStats', { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        // 保存压缩历史记录
+        async function saveCompressionHistory(record) {
+            const preferences = loadPreferences();
+            if (!preferences.saveHistory) return;
+
+            // 获取 blob 数据
+            const arrayBuffer = await record.blob.arrayBuffer();
+            const recordToSave = {
+                ...record,
+                blobData: arrayBuffer,
+                timestamp: Date.now()
+            };
+
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction('compressionHistory', 'readwrite');
+                const store = transaction.objectStore('compressionHistory');
+                store.add(recordToSave);
+                transaction.oncomplete = () => {
+                    updateUserStats('increment', 'totalImages', 1);
+                    updateUserStats('add', 'totalSavedBytes', record.originalSize - record.compressedSize);
+                    resolve();
+                };
+                transaction.onerror = reject;
+            });
+        }
+
+        // 获取所有压缩历史
+        function getAllCompressionHistory() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction('compressionHistory', 'readonly');
+                const store = transaction.objectStore('compressionHistory');
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result.sort((a, b) => b.timestamp - a.timestamp));
+                request.onerror = reject;
+            });
+        }
+
+        // 删除单条历史
+        function deleteCompressionHistory(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction('compressionHistory', 'readwrite');
+                const store = transaction.objectStore('compressionHistory');
+                store.delete(id);
+                transaction.oncomplete = resolve;
+                transaction.onerror = reject;
+            });
+        }
+
+        // 清空所有历史
+        function clearAllCompressionHistory() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction('compressionHistory', 'readwrite');
+                const store = transaction.objectStore('compressionHistory');
+                store.clear();
+                transaction.oncomplete = resolve;
+                transaction.onerror = reject;
+            });
+        }
+
+        // 获取用户统计
+        function getUserStats() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction('userStats', 'readonly');
+                const store = transaction.objectStore('userStats');
+                const request = store.get('stats');
+                request.onsuccess = () => {
+                    if (request.result) {
+                        resolve(request.result.data);
+                    } else {
+                        resolve({
+                            totalImages: 0,
+                            totalSavedBytes: 0,
+                            firstUse: Date.now(),
+                            isPro: false,
+                            remainingFreeQuota: 30
+                        });
+                    }
+                };
+                request.onerror = reject;
+            });
+        }
+
+        // 更新用户统计
+        function updateUserStats(operation, key, value) {
+            getUserStats().then(stats => {
+                if (operation === 'increment') {
+                    stats[key] = (stats[key] || 0) + value;
+                } else if (operation === 'add') {
+                    stats[key] = (stats[key] || 0) + value;
+                } else {
+                    stats[key] = value;
+                }
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction('userStats', 'readwrite');
+                    const store = transaction.objectStore('userStats');
+                    store.put({ id: 'stats', data: stats });
+                    transaction.oncomplete = resolve;
+                    transaction.onerror = reject;
+                });
+            });
+        }
+
+        // 加载用户偏好
+        function loadPreferences() {
+            const saved = localStorage.getItem('userPreferences');
+            const defaultPrefs = {
+                saveHistory: true,
+                rememberSettings: true,
+                autoDownload: false
+            };
+            if (!saved) return defaultPrefs;
+            return {...defaultPrefs, ...JSON.parse(saved)};
+        }
+
+        // 保存用户偏好
+        function savePreferences() {
+            const prefs = {
+                saveHistory: document.getElementById('prefSaveHistory').checked,
+                rememberSettings: document.getElementById('prefRememberSettings').checked,
+                autoDownload: document.getElementById('prefAutoDownload').checked
+            };
+            localStorage.setItem('userPreferences', JSON.stringify(prefs));
+        }
+
+        // 清除所有用户数据
+        function clearAllUserData() {
+            if (!confirm('确定要清除所有本地数据吗？\n这包括：压缩历史、偏好设置、登录信息\n清除后无法恢复！')) {
+                return;
+            }
+            clearAllCompressionHistory().then(() => {
+                localStorage.removeItem('googleUser');
+                localStorage.removeItem('userPreferences');
+                localStorage.removeItem('lastSettings');
+                // 重置IndexedDB
+                indexedDB.deleteDatabase('ImageCompressorDB');
+                alert('所有数据已清除，页面将刷新');
+                location.reload();
+            });
+        }
+
+        // 打开个人中心
+        function openUserCenter() {
+            document.getElementById('userCenterModal').classList.add('show');
+            renderUserProfile();
+            loadHistoryList();
+        }
+
+        // 关闭个人中心
+        function closeUserCenter() {
+            document.getElementById('userCenterModal').classList.remove('show');
+        }
+
+        // 切换标签页
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.tab-item[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        // 渲染用户信息卡片
+        async function renderUserProfile() {
+            if (!currentUser) return;
+            const stats = await getUserStats();
+            const totalSavedKB = (stats.totalSavedBytes / 1024).toFixed(2);
+            const totalSavedMB = (stats.totalSavedBytes / (1024 * 1024)).toFixed(2);
+            const savedDisplay = stats.totalSavedBytes > 1024 * 1024 ? `${totalSavedMB} MB` : `${totalSavedKB} KB`;
+
+            // 计算剩余配额显示
+            let remainingHtml = '';
+            let remainingClass = 'user-stat-value';
+            if (stats.isPro) {
+                remainingHtml = '<div class="user-stat-value unlimited">∞</div>';
+                remainingClass = 'user-stat-label';
+            } else {
+                const remaining = stats.remainingFreeQuota || 0;
+                if (remaining <= 5) {
+                    remainingClass = 'user-stat-value low';
+                }
+                remainingHtml = `<div class="${remainingClass}">${remaining}</div>`;
+            }
+
+            const badgeClass = stats.isPro ? 'badge-pro' : 'badge-free';
+            const badgeText = stats.isPro ? '✓ 终身会员' : '免费用户';
+
+            const html = `
+                <img src="${currentUser.picture}" class="user-profile-avatar" alt="avatar">
+                <div class="user-profile-info">
+                    <h3>${currentUser.name} <span class="user-badge ${badgeClass}">${badgeText}</span></h3>
+                    <p>${currentUser.email}</p>
+                    <div class="user-stats">
+                        <div class="user-stat-item">
+                            <div class="user-stat-value">${stats.totalImages}</div>
+                            <div class="user-stat-label">已压缩</div>
+                        </div>
+                        <div class="user-stat-item">
+                            ${remainingHtml}
+                            <div class="${remainingClass}">剩余次数</div>
+                        </div>
+                        <div class="user-stat-item">
+                            <div class="user-stat-value">${savedDisplay}</div>
+                            <div class="user-stat-label">已节省</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('profileCard').innerHTML = html;
+
+            // 渲染会员中心
+            renderSubscriptionCard(stats);
+        }
+
+        // 渲染会员中心卡片
+        function renderSubscriptionCard(stats) {
+            let html = '';
+            let btnHtml = '';
+
+            if (stats.isPro) {
+                html = `
+                    <h3 style="color: #28a745; margin-bottom: 15px;">🎉 感谢您支持我们！</h3>
+                    <p style="font-size: 16px; color: #333; margin-bottom: 10px;">您已激活 <strong>终身无限次</strong> 会员资格</p>
+                    <ul style="color: #666; line-height: 2;">
+                        <li>✓ 无限次图片压缩</li>
+                        <li>✓ 所有功能永久可用</li>
+                        <li>✓ 未来更新免费升级</li>
+                    </ul>
+                    <p style="color: #666; margin-top: 15px;">激活时间：${new Date(stats.proActivatedAt || Date.now()).toLocaleDateString()}</p>
+                `;
+                btnHtml = '';
+            } else {
+                const remaining = stats.remainingFreeQuota || 0;
+                html = `
+                    <h3 style="color: #1e3c72; margin-bottom: 15px;">🎁 免费试用</h3>
+                    <p style="font-size: 16px; color: #333; margin-bottom: 15px;">
+                        您还剩余 <strong style="color: ${remaining <= 5 ? '#dc3545' : '#667eea'}">${remaining}</strong> 次免费压缩机会
+                    </p>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 15px 0;">
+                        <h4 style="color: #1e3c72; margin-bottom: 10px;">升级终身会员只需 <span style="color: #f5576c; font-size: 28px; font-weight: bold;">$9.9</span></h4>
+                        <ul style="color: #666; line-height: 2; padding-left: 20px;">
+                            <li>✓ 终身 <strong>无限次</strong> 使用图片压缩</li>
+                            <li>✓ 所有现有功能和未来更新</li>
+                            <li>✓ 一次付费，永久使用</li>
+                            <li>✓ 支持项目持续开发</li>
+                        </ul>
+                    </div>
+                `;
+                btnHtml = `<button class="btn-upgrade" style="font-size: 16px; padding: 12px 40px;" onclick="openUpgradeModal()">立即升级终身会员</button>`;
+            }
+
+            document.getElementById('subscriptionCard').innerHTML = html;
+            document.getElementById('upgradeBtnContainer').innerHTML = btnHtml;
+        }
+
+        // 检查是否还有可用配额
+        async function hasRemainingQuota() {
+            const stats = await getUserStats();
+            if (stats.isPro) return true;
+            return (stats.remainingFreeQuota || 0) > 0;
+        }
+
+        // 消耗一次配额
+        async function consumeQuota() {
+            const stats = await getUserStats();
+            if (stats.isPro) return;
+
+            if (stats.remainingFreeQuota === undefined) {
+                stats.remainingFreeQuota = 30;
+            }
+            if (stats.remainingFreeQuota > 0) {
+                stats.remainingFreeQuota -= 1;
+            }
+
+            updateUserStats('set', 'remainingFreeQuota', stats.remainingFreeQuota);
+            updateQuotaWarning();
+        }
+
+        // 更新配额警告显示
+        async function updateQuotaWarning() {
+            const stats = await getUserStats();
+            if (stats.isPro || (stats.remainingFreeQuota || 0) > 0) {
+                document.getElementById('quotaWarning').classList.remove('show');
+            } else {
+                document.getElementById('quotaWarning').classList.add('show');
+            }
+        }
+
+        // 激活会员（用户支付后）
+        async function activatePro() {
+            updateUserStats('set', 'isPro', true);
+            updateUserStats('set', 'proActivatedAt', Date.now());
+            await renderUserProfile();
+            updateQuotaWarning();
+            alert('🎉 恭喜！会员已激活，现在可以无限次使用了！');
+            closeUpgradeModal();
+        }
+
+        // 打开升级弹窗
+        function openUpgradeModal() {
+            // 创建一个新的弹窗用于显示支付二维码
+            const modal = document.createElement('div');
+            modal.id = 'paymentModalOverlay';
+            modal.className = 'modal-overlay show';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h2>💎 升级终身会员</h2>
+                        <button class="modal-close" onclick="closeUpgradeModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="payment-modal">
+                            <div class="payment-info">
+                                <h3>终身无限次使用</h3>
+                                <div class="payment-price">$9.90 USD</div>
+                                <div class="payment-desc">一次付费，永久使用，所有功能免费更新</div>
+                            </div>
+                            <div class="payment-qrcode">
+                                <!-- 这里放置你的支付二维码图片 -->
+                                <img src="https://via.placeholder.com/236" alt="请替换为实际支付二维码" id="paymentQrImage">
+                            </div>
+                            <div class="payment-hint">
+                                <p><strong>支付完成后</strong>，请点击下方按钮验证激活会员：</p>
+                                <button class="btn-upgrade" style="margin-top: 10px;" onclick="activatePro()">我已支付，激活会员</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 关闭升级弹窗
+        function closeUpgradeModal() {
+            const modal = document.getElementById('paymentModalOverlay');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 加载历史列表
+        async function loadHistoryList() {
+            const history = await getAllCompressionHistory();
+            const container = document.getElementById('historyList');
+
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-history">
+                        <p>暂无压缩历史记录</p>
+                        <p style="font-size: 13px; margin-top: 10px; color: #999;">压缩完成后会自动保存到这里</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>文件名</th>
+                            <th>原始大小</th>
+                            <th>压缩后</th>
+                            <th>压缩率</th>
+                            <th>时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            history.forEach(item => {
+                const ratio = ((1 - item.compressedSize / item.originalSize) * 100).toFixed(1);
+                const date = new Date(item.timestamp).toLocaleString();
+                html += `
+                    <tr>
+                        <td>${item.fileName}</td>
+                        <td>${formatBytes(item.originalSize)}</td>
+                        <td>${formatBytes(item.compressedSize)}</td>
+                        <td>${ratio}%</td>
+                        <td style="font-size: 12px; color: #666;">${date}</td>
+                        <td>
+                            <button class="btn-download-history" onclick="downloadHistoryItem(${item.id})">下载</button>
+                            <button class="btn-delete-history" onclick="deleteHistoryItem(${item.id})">删除</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        // 下载历史记录中的图片
+        async function downloadHistoryItem(id) {
+            const history = await getAllCompressionHistory();
+            const item = history.find(h => h.id === id);
+            if (!item) return;
+
+            const blob = new Blob([item.blobData], { type: item.mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = item.downloadName;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 删除历史记录
+        async function deleteHistoryItem(id) {
+            if (!confirm('确定要删除这条记录吗？')) return;
+            await deleteCompressionHistory(id);
+            await loadHistoryList();
+            await renderUserProfile();
+        }
+
+        // 清空所有历史
+        async function clearAllHistory() {
+            if (!confirm('确定要清空所有压缩历史吗？')) return;
+            await clearAllCompressionHistory();
+            // 重置统计
+            updateUserStats('set', 'totalImages', 0);
+            updateUserStats('set', 'totalSavedBytes', 0);
+            await loadHistoryList();
+            await renderUserProfile();
+        }
+
+        // 记住上次设置
+        function saveLastSettings() {
+            const prefs = loadPreferences();
+            if (!prefs.rememberSettings) return;
+
+            const settings = {
+                targetSize: {
+                    preset: selectedPreset,
+                    customSize: document.getElementById('customSize').value,
+                    customUnit: document.getElementById('customUnit').value
+                },
+                resolution: {
+                    preset: selectedResolutionPreset,
+                    customMaxWidth: document.getElementById('customMaxWidth').value
+                },
+                outputFormat: document.getElementById('outputFormat').value,
+                maxIterations: document.getElementById('maxIterations').value
+            };
+            localStorage.setItem('lastSettings', JSON.stringify(settings));
+        }
+
+        // 恢复上次设置
+        function loadLastSettings() {
+            const prefs = loadPreferences();
+            if (!prefs.rememberSettings) return;
+
+            const saved = localStorage.getItem('lastSettings');
+            if (!saved) return;
+
+            const settings = JSON.parse(saved);
+
+            // 恢复目标大小
+            if (settings.targetSize) {
+                selectedPreset = settings.targetSize.preset;
+                document.getElementById('customSize').value = settings.targetSize.customSize || '';
+                document.getElementById('customUnit').value = settings.targetSize.customUnit || 'KB';
+
+                // 更新预设UI
+                document.querySelectorAll('.size-option').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.size-option')[getPresetIndex(settings.targetSize.preset)].classList.add('active');
+                updateTargetSize();
+            }
+
+            // 恢复分辨率
+            if (settings.resolution) {
+                selectedResolutionPreset = settings.resolution.preset;
+                document.getElementById('customMaxWidth').value = settings.resolution.customMaxWidth || '';
+
+                // 更新预设UI
+                document.querySelectorAll('.resolution-option').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.resolution-option')[getResolutionPresetIndex(settings.resolution.preset)].classList.add('active');
+                updateMaxWidth();
+            }
+
+            // 恢复输出格式和迭代次数
+            if (settings.outputFormat) {
+                document.getElementById('outputFormat').value = settings.outputFormat;
+            }
+            if (settings.maxIterations) {
+                document.getElementById('maxIterations').value = settings.maxIterations;
+            }
+        }
+
+        function getPresetIndex(preset) {
+            const presets = [
+                {size: 100, unit: 'KB'},
+                {size: 200, unit: 'KB'},
+                {size: 500, unit: 'KB'},
+                {size: 1, unit: 'MB'},
+                {size: 2, unit: 'MB'},
+                {size: 5, unit: 'MB'}
+            ];
+            return presets.findIndex(p => p.size === preset.size && p.unit === preset.unit);
+        }
+
+        function getResolutionPresetIndex(preset) {
+            const presets = ['original', 1920, 1280, 960, 640, 480];
+            return presets.findIndex(p => p === preset);
+        }
+
+        // 点击模态框遮罩关闭
+        document.getElementById('userCenterModal').addEventListener('click', (e) => {
+            if (e.target.id === 'userCenterModal') {
+                closeUserCenter();
+            }
+        });
+
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initDB().then(async () => {
+                console.log('IndexedDB initialized');
+                await updateQuotaWarning();
+            });
+
+            // 加载偏好设置到UI
+            const prefs = loadPreferences();
+            document.getElementById('prefSaveHistory').checked = prefs.saveHistory;
+            document.getElementById('prefRememberSettings').checked = prefs.rememberSettings;
+            document.getElementById('prefAutoDownload').checked = prefs.autoDownload;
+
+            // 加载上次设置
+            loadLastSettings();
+        });
 
     </script>
+
+    <!-- 个人中心模态框 -->
+    <div class="modal-overlay" id="userCenterModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>👤 个人中心</h2>
+                <button class="modal-close" onclick="closeUserCenter()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="user-profile-card" id="profileCard">
+                    <!-- 动态填充 -->
+                </div>
+
+                <div class="tabs">
+                    <div class="tab-item active" data-tab="history" onclick="switchTab('history')">压缩历史</div>
+                    <div class="tab-item" data-tab="subscription" onclick="switchTab('subscription')">会员中心</div>
+                    <div class="tab-item" data-tab="preferences" onclick="switchTab('preferences')">偏好设置</div>
+                    <div class="tab-item" data-tab="about" onclick="switchTab('about')">关于</div>
+                </div>
+
+                <div class="tab-content active" id="tab-history">
+                    <div class="history-list" id="historyList">
+                        <!-- 动态填充 -->
+                    </div>
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button class="btn-zip" onclick="clearAllHistory()" style="background: #6c757d;">清空全部历史</button>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-subscription">
+                    <div class="user-profile-card" style="display: block;" id="subscriptionCard">
+                        <!-- 动态填充 -->
+                    </div>
+
+                    <div style="text-align: center; margin-top: 30px;" id="upgradeBtnContainer">
+                        <!-- 动态填充 -->
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-preferences">
+                    <div class="preferences-form">
+                        <div class="preference-item">
+                            <div class="preference-info">
+                            <h4>自动保存压缩历史</h4>
+                            <p>压缩完成后自动保存到历史记录中，数据存在本地</p>
+                        </div>
+                            <label class="switch">
+                                <input type="checkbox" id="prefSaveHistory" checked onchange="savePreferences()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                            <h4>记住上次设置</h4>
+                            <p>下次打开页面自动恢复上次的压缩参数</p>
+                        </div>
+                            <label class="switch">
+                                <input type="checkbox" id="prefRememberSettings" checked onchange="savePreferences()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                            <h4>自动下载压缩结果</h4>
+                            <p>压缩完成后自动开始下载</p>
+                        </div>
+                            <label class="switch">
+                                <input type="checkbox" id="prefAutoDownload" onchange="savePreferences()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="danger-zone">
+                        <h4>危险操作</h4>
+                        <p>清除所有本地数据包括历史记录、偏好设置和登录信息</p>
+                        <button class="btn-clear-data" onclick="clearAllUserData()">清除所有本地数据</button>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-about">
+                    <div class="about-section">
+                        <h4>关于这个工具</h4>
+                        <p>这是一个纯客户端的图片压缩工具，所有压缩操作都在你的浏览器中完成，图片不会上传到服务器，保护你的隐私。</p>
+                        
+                        <h4 style="margin-top: 20px;">主要功能</h4>
+                        <div class="feature-list">
+                            <div class="feature-item">✓ 指定目标文件大小压缩</div>
+                            <div class="feature-item">✓ 调整图片分辨率</div>
+                            <div class="feature-item">✓ 支持批量压缩</div>
+                            <div class="feature-item">✓ 支持 JPG/PNG/WebP/GIF</div>
+                            <div class="feature-item">✓ 智能二分法迭代压缩</div>
+                            <div class="feature-item">✓ 本地保存压缩历史</div>
+                        </div>
+
+                        <p style="margin-top: 20px; font-size: 13px; color: #999;">
+                            当前版本: v1.0.0<br>
+                            纯前端实现，无需后端，数据保存在本地
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
