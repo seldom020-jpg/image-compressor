@@ -1673,7 +1673,9 @@
                 // 保存最后设置
                 saveLastSettings();
                 // 更新配额显示
-                renderUserProfile();
+                if (currentUser) {
+                    await renderUserProfile();
+                }
 
             } catch (error) {
                 console.error('压缩失败:', error);
@@ -1969,17 +1971,22 @@
         // ============ 用户中心和数据存储功能 ============
 
         // 初始化 IndexedDB 存储压缩历史
-        let db;
+        let db = null;
         function initDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open('ImageCompressorDB', 1);
-                request.onerror = reject;
+                request.onerror = () => {
+                    console.error('IndexedDB open failed');
+                    reject(request.error);
+                };
                 request.onsuccess = () => {
                     db = request.result;
+                    console.log('IndexedDB opened successfully');
                     resolve(db);
                 };
                 request.onupgradeneeded = (e) => {
                     db = e.target.result;
+                    console.log('Creating object stores');
                     if (!db.objectStoreNames.contains('compressionHistory')) {
                         db.createObjectStore('compressionHistory', { keyPath: 'id', autoIncrement: true });
                     }
@@ -2007,9 +2014,9 @@
                 const transaction = db.transaction('compressionHistory', 'readwrite');
                 const store = transaction.objectStore('compressionHistory');
                 store.add(recordToSave);
-                transaction.oncomplete = () => {
-                    updateUserStats('increment', 'totalImages', 1);
-                    updateUserStats('add', 'totalSavedBytes', record.originalSize - record.compressedSize);
+                transaction.oncomplete = async () => {
+                    await updateUserStats('increment', 'totalImages', 1);
+                    await updateUserStats('add', 'totalSavedBytes', record.originalSize - record.compressedSize);
                     resolve();
                 };
                 transaction.onerror = reject;
@@ -2053,6 +2060,7 @@
         function getUserStats() {
             return new Promise((resolve, reject) => {
                 if (!db) {
+                    console.log('DB not ready, return default stats');
                     // DB未初始化，返回默认值
                     resolve({
                         totalImages: 0,
@@ -2063,22 +2071,35 @@
                     });
                     return;
                 }
-                const transaction = db.transaction('userStats', 'readonly');
-                const store = transaction.objectStore('userStats');
-                const request = store.get('stats');
-                request.onsuccess = () => {
-                    if (request.result && request.result.data) {
-                        // 如果没有剩余配额字段，设置默认值
-                        const data = request.result.data;
-                        if (data.remainingFreeQuota === undefined) {
-                            data.remainingFreeQuota = 30;
+                try {
+                    const transaction = db.transaction('userStats', 'readonly');
+                    const store = transaction.objectStore('userStats');
+                    const request = store.get('stats');
+                    request.onsuccess = () => {
+                        if (request.result && request.result.data) {
+                            // 如果没有剩余配额字段，设置默认值
+                            const data = request.result.data;
+                            if (data.remainingFreeQuota === undefined) {
+                                data.remainingFreeQuota = 30;
+                            }
+                            if (data.isPro === undefined) {
+                                data.isPro = false;
+                            }
+                            resolve(data);
+                        } else {
+                            // 新用户默认30次免费额度
+                            resolve({
+                                totalImages: 0,
+                                totalSavedBytes: 0,
+                                firstUse: Date.now(),
+                                isPro: false,
+                                remainingFreeQuota: 30
+                            });
                         }
-                        if (data.isPro === undefined) {
-                            data.isPro = false;
-                        }
-                        resolve(data);
-                    } else {
-                        // 新用户默认30次免费额度
+                    };
+                    request.onerror = () => {
+                        // 出错也返回默认值
+                        console.error('getUserStats error, return default');
                         resolve({
                             totalImages: 0,
                             totalSavedBytes: 0,
@@ -2086,10 +2107,9 @@
                             isPro: false,
                             remainingFreeQuota: 30
                         });
-                    }
-                };
-                request.onerror = () => {
-                    // 出错也返回默认值
+                    };
+                } catch (e) {
+                    console.error('getUserStats exception', e);
                     resolve({
                         totalImages: 0,
                         totalSavedBytes: 0,
@@ -2097,7 +2117,7 @@
                         isPro: false,
                         remainingFreeQuota: 30
                     });
-                };
+                }
             });
         }
 
@@ -2111,16 +2131,30 @@
             } else {
                 stats[key] = value;
             }
+
             return new Promise((resolve, reject) => {
                 if (!db) {
+                    console.log('DB not ready, skip save');
                     resolve();
                     return;
                 }
-                const transaction = db.transaction('userStats', 'readwrite');
-                const store = transaction.objectStore('userStats');
-                store.put({ id: 'stats', data: stats });
-                transaction.oncomplete = resolve;
-                transaction.onerror = reject;
+
+                try {
+                    const transaction = db.transaction('userStats', 'readwrite');
+                    const store = transaction.objectStore('userStats');
+                    store.put({ id: 'stats', data: stats });
+                    transaction.oncomplete = () => {
+                        console.log('User stats updated:', stats);
+                        resolve();
+                    };
+                    transaction.onerror = (err) => {
+                        console.error('Update stats error', err);
+                        reject(err);
+                    };
+                } catch (e) {
+                    console.error('updateUserStats exception', e);
+                    resolve();
+                }
             });
         }
 
