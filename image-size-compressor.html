@@ -2052,13 +2052,33 @@
         // 获取用户统计
         function getUserStats() {
             return new Promise((resolve, reject) => {
+                if (!db) {
+                    // DB未初始化，返回默认值
+                    resolve({
+                        totalImages: 0,
+                        totalSavedBytes: 0,
+                        firstUse: Date.now(),
+                        isPro: false,
+                        remainingFreeQuota: 30
+                    });
+                    return;
+                }
                 const transaction = db.transaction('userStats', 'readonly');
                 const store = transaction.objectStore('userStats');
                 const request = store.get('stats');
                 request.onsuccess = () => {
-                    if (request.result) {
-                        resolve(request.result.data);
+                    if (request.result && request.result.data) {
+                        // 如果没有剩余配额字段，设置默认值
+                        const data = request.result.data;
+                        if (data.remainingFreeQuota === undefined) {
+                            data.remainingFreeQuota = 30;
+                        }
+                        if (data.isPro === undefined) {
+                            data.isPro = false;
+                        }
+                        resolve(data);
                     } else {
+                        // 新用户默认30次免费额度
                         resolve({
                             totalImages: 0,
                             totalSavedBytes: 0,
@@ -2068,7 +2088,16 @@
                         });
                     }
                 };
-                request.onerror = reject;
+                request.onerror = () => {
+                    // 出错也返回默认值
+                    resolve({
+                        totalImages: 0,
+                        totalSavedBytes: 0,
+                        firstUse: Date.now(),
+                        isPro: false,
+                        remainingFreeQuota: 30
+                    });
+                };
             });
         }
 
@@ -2133,8 +2162,10 @@
         // 打开个人中心
         function openUserCenter() {
             document.getElementById('userCenterModal').classList.add('show');
-            renderUserProfile();
-            loadHistoryList();
+            setTimeout(() => {
+                renderUserProfile();
+                loadHistoryList();
+            }, 100);
         }
 
         // 关闭个人中心
@@ -2152,7 +2183,10 @@
 
         // 渲染用户信息卡片
         async function renderUserProfile() {
-            if (!currentUser) return;
+            if (!currentUser) {
+                console.log('currentUser is null, skip render');
+                return;
+            }
             const stats = await getUserStats();
             const totalSavedKB = (stats.totalSavedBytes / 1024).toFixed(2);
             const totalSavedMB = (stats.totalSavedBytes / (1024 * 1024)).toFixed(2);
@@ -2165,7 +2199,7 @@
                 remainingHtml = '<div class="user-stat-value unlimited">∞</div>';
                 remainingClass = 'user-stat-label';
             } else {
-                const remaining = stats.remainingFreeQuota || 0;
+                const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
                 if (remaining <= 5) {
                     remainingClass = 'user-stat-value low';
                 }
@@ -2220,7 +2254,7 @@
                 `;
                 btnHtml = '';
             } else {
-                const remaining = stats.remainingFreeQuota || 0;
+                const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
                 html = `
                     <h3 style="color: #1e3c72; margin-bottom: 15px;">🎁 免费试用</h3>
                     <p style="font-size: 16px; color: #333; margin-bottom: 15px;">
@@ -2247,7 +2281,8 @@
         async function hasRemainingQuota() {
             const stats = await getUserStats();
             if (stats.isPro) return true;
-            return (stats.remainingFreeQuota || 0) > 0;
+            const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
+            return remaining > 0;
         }
 
         // 消耗一次配额
@@ -2255,21 +2290,23 @@
             const stats = await getUserStats();
             if (stats.isPro) return;
 
-            if (stats.remainingFreeQuota === undefined) {
-                stats.remainingFreeQuota = 30;
-            }
-            if (stats.remainingFreeQuota > 0) {
-                stats.remainingFreeQuota -= 1;
+            let remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
+            if (remaining > 0) {
+                remaining -= 1;
             }
 
-            updateUserStats('set', 'remainingFreeQuota', stats.remainingFreeQuota);
+            updateUserStats('set', 'remainingFreeQuota', remaining);
             updateQuotaWarning();
+            if (currentUser) {
+                renderUserProfile();
+            }
         }
 
         // 更新配额警告显示
         async function updateQuotaWarning() {
             const stats = await getUserStats();
-            if (stats.isPro || (stats.remainingFreeQuota || 0) > 0) {
+            const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
+            if (stats.isPro || remaining > 0) {
                 document.getElementById('quotaWarning').classList.remove('show');
             } else {
                 document.getElementById('quotaWarning').classList.add('show');
