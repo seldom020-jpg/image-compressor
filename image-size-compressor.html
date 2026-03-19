@@ -1557,7 +1557,7 @@
             updateMaxWidth();
 
             // 检查配额
-            if (!await hasRemainingQuota()) {
+            if (!hasRemainingQuota()) {
                 alert('免费额度已用完，请升级会员后继续使用');
                 openUpgradeModal();
                 return;
@@ -2056,74 +2056,47 @@
             });
         }
 
-        // 获取用户统计
+        // 获取用户统计 - 使用localStorage更简单可靠
         function getUserStats() {
-            return new Promise((resolve, reject) => {
-                if (!db) {
-                    console.log('DB not ready, return default stats');
-                    // DB未初始化，返回默认值
-                    resolve({
-                        totalImages: 0,
-                        totalSavedBytes: 0,
-                        firstUse: Date.now(),
-                        isPro: false,
-                        remainingFreeQuota: 30
-                    });
-                    return;
+            try {
+                const saved = localStorage.getItem('userStats');
+                if (saved) {
+                    const stats = JSON.parse(saved);
+                    // 填充默认值
+                    if (stats.remainingFreeQuota === undefined) {
+                        stats.remainingFreeQuota = 30;
+                    }
+                    if (stats.isPro === undefined) {
+                        stats.isPro = false;
+                    }
+                    if (stats.totalImages === undefined) {
+                        stats.totalImages = 0;
+                    }
+                    if (stats.totalSavedBytes === undefined) {
+                        stats.totalSavedBytes = 0;
+                    }
+                    console.log('Loaded user stats from localStorage:', stats);
+                    return stats;
                 }
-                try {
-                    const transaction = db.transaction('userStats', 'readonly');
-                    const store = transaction.objectStore('userStats');
-                    const request = store.get('stats');
-                    request.onsuccess = () => {
-                        if (request.result && request.result.data) {
-                            // 如果没有剩余配额字段，设置默认值
-                            const data = request.result.data;
-                            if (data.remainingFreeQuota === undefined) {
-                                data.remainingFreeQuota = 30;
-                            }
-                            if (data.isPro === undefined) {
-                                data.isPro = false;
-                            }
-                            resolve(data);
-                        } else {
-                            // 新用户默认30次免费额度
-                            resolve({
-                                totalImages: 0,
-                                totalSavedBytes: 0,
-                                firstUse: Date.now(),
-                                isPro: false,
-                                remainingFreeQuota: 30
-                            });
-                        }
-                    };
-                    request.onerror = () => {
-                        // 出错也返回默认值
-                        console.error('getUserStats error, return default');
-                        resolve({
-                            totalImages: 0,
-                            totalSavedBytes: 0,
-                            firstUse: Date.now(),
-                            isPro: false,
-                            remainingFreeQuota: 30
-                        });
-                    };
-                } catch (e) {
-                    console.error('getUserStats exception', e);
-                    resolve({
-                        totalImages: 0,
-                        totalSavedBytes: 0,
-                        firstUse: Date.now(),
-                        isPro: false,
-                        remainingFreeQuota: 30
-                    });
-                }
-            });
+            } catch (e) {
+                console.error('Failed to load stats', e);
+            }
+
+            // 默认值
+            const defaultStats = {
+                totalImages: 0,
+                totalSavedBytes: 0,
+                firstUse: Date.now(),
+                isPro: false,
+                remainingFreeQuota: 30
+            };
+            console.log('No saved stats, using default:', defaultStats);
+            return defaultStats;
         }
 
-        // 更新用户统计
+        // 更新用户统计 - 保存到localStorage
         async function updateUserStats(operation, key, value) {
-            const stats = await getUserStats();
+            const stats = getUserStats();
             if (operation === 'increment') {
                 stats[key] = (stats[key] || 0) + value;
             } else if (operation === 'add') {
@@ -2131,31 +2104,12 @@
             } else {
                 stats[key] = value;
             }
-
-            return new Promise((resolve, reject) => {
-                if (!db) {
-                    console.log('DB not ready, skip save');
-                    resolve();
-                    return;
-                }
-
-                try {
-                    const transaction = db.transaction('userStats', 'readwrite');
-                    const store = transaction.objectStore('userStats');
-                    store.put({ id: 'stats', data: stats });
-                    transaction.oncomplete = () => {
-                        console.log('User stats updated:', stats);
-                        resolve();
-                    };
-                    transaction.onerror = (err) => {
-                        console.error('Update stats error', err);
-                        reject(err);
-                    };
-                } catch (e) {
-                    console.error('updateUserStats exception', e);
-                    resolve();
-                }
-            });
+            try {
+                localStorage.setItem('userStats', JSON.stringify(stats));
+                console.log('User stats saved to localStorage:', stats);
+            } catch (e) {
+                console.error('Failed to save stats', e);
+            }
         }
 
         // 加载用户偏好
@@ -2189,6 +2143,7 @@
                 localStorage.removeItem('googleUser');
                 localStorage.removeItem('userPreferences');
                 localStorage.removeItem('lastSettings');
+                localStorage.removeItem('userStats');
                 // 重置IndexedDB
                 indexedDB.deleteDatabase('ImageCompressorDB');
                 alert('所有数据已清除，页面将刷新');
@@ -2315,16 +2270,16 @@
         }
 
         // 检查是否还有可用配额
-        async function hasRemainingQuota() {
-            const stats = await getUserStats();
+        function hasRemainingQuota() {
+            const stats = getUserStats();
             if (stats.isPro) return true;
             const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
             return remaining > 0;
         }
 
         // 消耗一次配额
-        async function consumeQuota() {
-            const stats = await getUserStats();
+        function consumeQuota() {
+            const stats = getUserStats();
             if (stats.isPro) return;
 
             let remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
@@ -2333,17 +2288,17 @@
             }
 
             console.log('Consuming quota, remaining:', remaining);
-            await updateUserStats('set', 'remainingFreeQuota', remaining);
-            await updateUserStats('increment', 'totalImages', 1);
-            await updateQuotaWarning();
+            updateUserStats('set', 'remainingFreeQuota', remaining);
+            updateUserStats('increment', 'totalImages', 1);
+            updateQuotaWarning();
             if (currentUser) {
-                await renderUserProfile();
+                renderUserProfile();
             }
         }
 
         // 更新配额警告显示
-        async function updateQuotaWarning() {
-            const stats = await getUserStats();
+        function updateQuotaWarning() {
+            const stats = getUserStats();
             const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
             if (stats.isPro || remaining > 0) {
                 document.getElementById('quotaWarning').classList.remove('show');
@@ -2353,10 +2308,10 @@
         }
 
         // 激活会员（用户支付后）
-        async function activatePro() {
+        function activatePro() {
             updateUserStats('set', 'isPro', true);
             updateUserStats('set', 'proActivatedAt', Date.now());
-            await renderUserProfile();
+            renderUserProfile();
             updateQuotaWarning();
             alert('🎉 恭喜！会员已激活，现在可以无限次使用了！');
             closeUpgradeModal();
@@ -2615,27 +2570,16 @@
 
         // 页面加载初始化
         document.addEventListener('DOMContentLoaded', function() {
-            initDB().then(async (initializedDB) => {
+            initDB().then((initializedDB) => {
                 db = initializedDB;
-                console.log('IndexedDB initialized');
-                // 确保新用户有默认统计数据（30次免费额度）
-                const stats = await getUserStats();
-                console.log('Initial stats loaded:', stats);
-
-                // 确保数据库中一定有默认数据
-                if (stats.remainingFreeQuota === 30 && stats.totalImages === 0) {
-                    console.log('Initializing default stats in DB: 30 free quota');
-                    await updateUserStats('set', 'remainingFreeQuota', 30);
-                    await updateUserStats('set', 'isPro', false);
-                    await updateUserStats('set', 'totalImages', 0);
-                    await updateUserStats('set', 'totalSavedBytes', 0);
-                }
-
-                const updatedStats = await getUserStats();
-                console.log('Stats after init:', updatedStats);
-                await updateQuotaWarning();
+                console.log('IndexedDB initialized for compression history');
+                // 用户统计用 localStorage，确保默认数据
+                const stats = getUserStats();
+                console.log('Initial stats loaded from localStorage:', stats);
+                updateQuotaWarning();
             }).catch(err => {
                 console.error('DB init error:', err);
+                updateQuotaWarning();
             });
 
             // 加载偏好设置到UI
