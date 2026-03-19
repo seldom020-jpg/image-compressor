@@ -2332,7 +2332,9 @@
                 remaining -= 1;
             }
 
+            console.log('Consuming quota, remaining:', remaining);
             await updateUserStats('set', 'remainingFreeQuota', remaining);
+            await updateUserStats('increment', 'totalImages', 1);
             await updateQuotaWarning();
             if (currentUser) {
                 await renderUserProfile();
@@ -2618,12 +2620,19 @@
                 console.log('IndexedDB initialized');
                 // 确保新用户有默认统计数据（30次免费额度）
                 const stats = await getUserStats();
-                if (stats.remainingFreeQuota === undefined || stats.remainingFreeQuota === null) {
+                console.log('Initial stats loaded:', stats);
+
+                // 确保数据库中一定有默认数据
+                if (stats.remainingFreeQuota === 30 && stats.totalImages === 0) {
+                    console.log('Initializing default stats in DB: 30 free quota');
                     await updateUserStats('set', 'remainingFreeQuota', 30);
                     await updateUserStats('set', 'isPro', false);
                     await updateUserStats('set', 'totalImages', 0);
                     await updateUserStats('set', 'totalSavedBytes', 0);
                 }
+
+                const updatedStats = await getUserStats();
+                console.log('Stats after init:', updatedStats);
                 await updateQuotaWarning();
             }).catch(err => {
                 console.error('DB init error:', err);
