@@ -2541,6 +2541,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             initDB().then(async () => {
                 console.log('IndexedDB initialized');
+                // 确保新用户有默认统计数据（30次免费额度）
+                const stats = await getUserStats();
+                if (stats.remainingFreeQuota === undefined) {
+                    await updateUserStats('set', 'remainingFreeQuota', 30);
+                    await updateUserStats('set', 'isPro', false);
+                    await updateUserStats('set', 'totalImages', 0);
+                    await updateUserStats('set', 'totalSavedBytes', 0);
+                }
                 await updateQuotaWarning();
             });
 
