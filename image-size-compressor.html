@@ -2102,22 +2102,25 @@
         }
 
         // 更新用户统计
-        function updateUserStats(operation, key, value) {
-            getUserStats().then(stats => {
-                if (operation === 'increment') {
-                    stats[key] = (stats[key] || 0) + value;
-                } else if (operation === 'add') {
-                    stats[key] = (stats[key] || 0) + value;
-                } else {
-                    stats[key] = value;
+        async function updateUserStats(operation, key, value) {
+            const stats = await getUserStats();
+            if (operation === 'increment') {
+                stats[key] = (stats[key] || 0) + value;
+            } else if (operation === 'add') {
+                stats[key] = (stats[key] || 0) + value;
+            } else {
+                stats[key] = value;
+            }
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    resolve();
+                    return;
                 }
-                return new Promise((resolve, reject) => {
-                    const transaction = db.transaction('userStats', 'readwrite');
-                    const store = transaction.objectStore('userStats');
-                    store.put({ id: 'stats', data: stats });
-                    transaction.oncomplete = resolve;
-                    transaction.onerror = reject;
-                });
+                const transaction = db.transaction('userStats', 'readwrite');
+                const store = transaction.objectStore('userStats');
+                store.put({ id: 'stats', data: stats });
+                transaction.oncomplete = resolve;
+                transaction.onerror = reject;
             });
         }
 
