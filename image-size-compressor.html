@@ -926,9 +926,10 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://accounts.google.com/gsi/client"></script>
-    <!-- PayPal Client ID -->
-    <script src="https://www.paypal.com/sdk/js?client-id=Afr3ULQbyIqo-guYfrS83Ve7OKASqL65mbNy0LbtV3TZrufYojZ1HzV9i5UchNSXvnCdRJ9YtLaLfBbu&currency=USD"></script>
+    <!-- Google GSI 改为异步加载，避免阻塞页面 -->
+    <script async src="https://accounts.google.com/gsi/client"></script>
+    <!-- PayPal SDK 改为异步加载 -->
+    <script async src="https://www.paypal.com/sdk/js?client-id=Afr3ULQbyIqo-guYfrS83Ve7OKASqL65mbNy0LbtV3TZrufYojZ1HzV9i5UchNSXvnCdRJ9YtLaLfBbu&currency=USD"></script>
     <style>
         /* Google Login Styles */
         .login-area {
@@ -1301,8 +1302,17 @@
 
         // 页面加载时检查认证状态 + 初始化 Google 登录
         document.addEventListener('DOMContentLoaded', function() {
-            initGoogleLogin();
             checkAuth();
+            // 等待 Google GSI 脚本异步加载完成后再初始化
+            function tryInitGoogle() {
+                if (window.google && google.accounts) {
+                    initGoogleLogin();
+                } else {
+                    // Google 脚本还没加载好，等一会儿再试
+                    setTimeout(tryInitGoogle, 200);
+                }
+            }
+            tryInitGoogle();
         });
 
         let uploadedFiles = [];
@@ -2002,6 +2012,16 @@
             const preferences = loadPreferences();
             if (!preferences.saveHistory) return;
 
+            // 确保 DB 已经初始化完成，如果还没好就等待
+            if (!db) {
+                try {
+                    db = await initDB();
+                } catch (e) {
+                    console.error('DB init failed when saving history:', e);
+                    return; // DB 初始化失败也不影响压缩，只是不保存历史
+                }
+            }
+
             // 获取 blob 数据
             const arrayBuffer = await record.blob.arrayBuffer();
             const recordToSave = {
@@ -2024,7 +2044,16 @@
         }
 
         // 获取所有压缩历史
-        function getAllCompressionHistory() {
+        async function getAllCompressionHistory() {
+            // 确保 DB 已经初始化完成
+            if (!db) {
+                try {
+                    db = await initDB();
+                } catch (e) {
+                    console.error('DB init failed:', e);
+                    return [];
+                }
+            }
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction('compressionHistory', 'readonly');
                 const store = transaction.objectStore('compressionHistory');
@@ -2035,7 +2064,16 @@
         }
 
         // 删除单条历史
-        function deleteCompressionHistory(id) {
+        async function deleteCompressionHistory(id) {
+            // 确保 DB 已经初始化完成
+            if (!db) {
+                try {
+                    db = await initDB();
+                } catch (e) {
+                    console.error('DB init failed:', e);
+                    return;
+                }
+            }
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction('compressionHistory', 'readwrite');
                 const store = transaction.objectStore('compressionHistory');
@@ -2046,7 +2084,16 @@
         }
 
         // 清空所有历史
-        function clearAllCompressionHistory() {
+        async function clearAllCompressionHistory() {
+            // 确保 DB 已经初始化完成
+            if (!db) {
+                try {
+                    db = await initDB();
+                } catch (e) {
+                    console.error('DB init failed:', e);
+                    return;
+                }
+            }
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction('compressionHistory', 'readwrite');
                 const store = transaction.objectStore('compressionHistory');
