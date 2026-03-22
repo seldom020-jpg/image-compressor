@@ -2319,7 +2319,24 @@
         // 检查是否还有可用配额
         function hasRemainingQuota() {
             const stats = getUserStats();
-            if (stats.isPro) return true;
+            if (stats.isPro) {
+                // 会员需要验证 Google ID 是否匹配
+                if (currentUser && stats.proGoogleUserId) {
+                    // 绑定的 Google ID 和当前登录一致才是有效会员
+                    if (stats.proGoogleUserId === currentUser.id) {
+                        return true;
+                    } else {
+                        // ID 不匹配，不认可是会员
+                        return false;
+                    }
+                }
+                // 旧数据没有绑定 Google ID，兼容处理（默认还是会员）
+                // 如果是拷贝过来的旧数据，刚好也没绑定 ID，那就防不住了，但这种情况很少
+                if (!stats.proGoogleUserId) {
+                    return true;
+                }
+                return false;
+            }
             const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
             return remaining > 0;
         }
@@ -2357,6 +2374,7 @@
         // 激活会员（用户支付后）
         function activatePro() {
             updateUserStats('set', 'isPro', true);
+            updateUserStats('set', 'proGoogleUserId', currentUser.id);
             updateUserStats('set', 'proActivatedAt', Date.now());
             renderUserProfile();
             updateQuotaWarning();
