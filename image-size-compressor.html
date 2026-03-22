@@ -2111,7 +2111,8 @@
                     const stats = JSON.parse(saved);
                     // 填充默认值
                     if (stats.remainingFreeQuota === undefined) {
-                        stats.remainingFreeQuota = 30;
+                        // 未登录游客默认5次，已登录用户默认30次
+                        stats.remainingFreeQuota = currentUser ? 30 : 5;
                     }
                     if (stats.isPro === undefined) {
                         stats.isPro = false;
@@ -2135,7 +2136,7 @@
                 totalSavedBytes: 0,
                 firstUse: Date.now(),
                 isPro: false,
-                remainingFreeQuota: 30
+                remainingFreeQuota: currentUser ? 30 : 5
             };
             console.log('No saved stats, using default:', defaultStats);
             return defaultStats;
@@ -2238,7 +2239,7 @@
                 remainingHtml = '<div class="user-stat-value unlimited">∞</div>';
                 remainingClass = 'user-stat-label';
             } else {
-                const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
+                const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : (currentUser ? 30 : 5);
                 if (remaining <= 5) {
                     remainingClass = 'user-stat-value low';
                 }
@@ -2293,7 +2294,7 @@
                 `;
                 btnHtml = '';
             } else {
-                const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
+                const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : (currentUser ? 30 : 5);
                 html = `
                     <h3 style="color: #1e3c72; margin-bottom: 15px;">🎁 免费试用</h3>
                     <p style="font-size: 16px; color: #333; margin-bottom: 15px;">
@@ -2337,7 +2338,7 @@
                 }
                 return false;
             }
-            const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
+            const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : (currentUser ? 30 : 5);
             return remaining > 0;
         }
 
@@ -2346,7 +2347,7 @@
             const stats = getUserStats();
             if (stats.isPro) return;
 
-            let remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
+            let remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : (currentUser ? 30 : 5);
             if (remaining > 0) {
                 remaining -= 1;
             }
@@ -2363,7 +2364,7 @@
         // 更新配额警告显示
         function updateQuotaWarning() {
             const stats = getUserStats();
-            const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : 30;
+            const remaining = stats.remainingFreeQuota !== undefined ? stats.remainingFreeQuota : (currentUser ? 30 : 5);
             if (stats.isPro || remaining > 0) {
                 document.getElementById('quotaWarning').classList.remove('show');
             } else {
