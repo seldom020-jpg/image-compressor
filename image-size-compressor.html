@@ -1228,7 +1228,11 @@
                     updateQuotaWarning();
                 }, 500);
             } else {
-                lockContent();
+                // 未登录游客也可以试用，不锁定内容，只是配额少一点
+                unlockContent();
+                setTimeout(() => {
+                    updateQuotaWarning();
+                }, 500);
             }
         }
 
