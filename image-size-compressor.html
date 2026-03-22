@@ -2373,6 +2373,15 @@
                 document.getElementById('quotaWarning').classList.remove('show');
             } else {
                 document.getElementById('quotaWarning').classList.add('show');
+                // 根据是否登录动态修改提示文案
+                const descEl = document.getElementById('quotaExhaustedDesc');
+                if (currentUser) {
+                    // 已登录用户用完30次，提示升级
+                    descEl.textContent = '您已用完赠送的 30 次免费压缩额度。升级到终身会员即可无限次使用。';
+                } else {
+                    // 未登录游客用完5次，提示登录获取更多
+                    descEl.textContent = '您已用完 5 次免费试用额度。登录 Google 账号可解锁 30 次免费压缩，升级后无限次使用。';
+                }
             }
         }
 
