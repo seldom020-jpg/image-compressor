@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飞书文档 → 公众号格式转换器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #1e3c72;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 15px;
+        }
+
+        .input-area {
+            margin-bottom: 25px;
+        }
+
+        .input-area label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .input-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-box input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .input-box input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #218838;
+        }
+
+        .hint {
+            background: #f8f9fa;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .hint ol {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .hint li {
+            margin-bottom: 5px;
+        }
+
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .panel h3 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .textarea-container {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .preview-area {
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .preview-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .preview-area::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .preview-area::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .action-bar {
+            margin-top: 15px;
+            text-align: right;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .status {
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.loading {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .settings {
+            background: #f0f8ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .settings h4 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .setting-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* 公众号样式预览 */
+        .wechat-preview h1 {
+            font-size: 22px;
+            color: #333;
+            margin: 20px 0 15px 0;
+            line-height: 1.4;
+            font-weight: bold;
+        }
+
+        .wechat-preview h2 {
+            font-size: 20px;
+            color: #333;
+            margin: 18px 0 12px 0;
+            line-height: 1.4;
+            font-weight: bold;
+        }
+
+        .wechat-preview h3 {
+            font-size: 18px;
+            color: #333;
+            margin: 16px 0 10px 0;
+            line-height: 1.4;
+            font-weight: bold;
+        }
+
+        .wechat-preview p {
+            color: #333;
+            line-height: 1.8;
+            font-size: 16px;
+            margin: 10px 0;
+            letter-spacing: 0.5px;
+        }
+
+        .wechat-preview img {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block;
+            margin: 15px auto;
+            border-radius: 4px;
+        }
+
+        .wechat-preview blockquote {
+            border-left: 4px solid #667eea;
+            padding: 10px 15px;
+            margin: 15px 0;
+            background: #f8f9fa;
+            color: #666;
+            border-radius: 4px;
+        }
+
+        .wechat-preview pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .wechat-preview code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .wechat-preview ul, .wechat-preview ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        .wechat-preview li {
+            line-height: 1.8;
+            color: #333;
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        .wechat-preview a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .wechat-preview hr {
+            border: none;
+            height: 1px;
+            background: #eee;
+            margin: 20px 0;
+        }
+
+        .wechat-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .wechat-preview th, .wechat-preview td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .wechat-preview th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗘️ 飞书文档 → 公众号转换器</h1>
+            <p>一键转换飞书文档文章为公众号适配格式，直接复制粘贴使用</p>
+        </div>
+
+        <div class="hint">
+            <strong>使用说明：</strong>
+            <ol>
+                <li>在飞书文档中点击「分享」→「创建分享链接」→ 设置为「互联网用户可查看」</li>
+                <li>复制分享链接粘贴到下方输入框</li>
+                <li>点击转换，然后复制转换后的内容到公众号编辑器</li>
+            </ol>
+        </div>
+
+        <div class="input-area">
+            <label>飞书文档分享链接</label>
+            <div class="input-box">
+                <input type="text" id="urlInput" placeholder="例如: https://bytedance.feishu.cn/docs/xxxxxxxxxxxxxxx" />
+                <button class="btn btn-primary" id="convertBtn" onclick="convert()">开始转换</button>
+            </div>
+        </div>
+
+        <div class="settings">
+            <h4>转换设置</h4>
+            <div class="setting-row">
+                <div class="setting-item">
+                    <input type="checkbox" id="addTopBorder" checked />
+                    <label for="addTopBorder">顶部添加分隔线</label>
+                </div>
+                <div class="setting-item">
+                    <input type="checkbox" id="addBottomSignature" />
+                    <label for="addBottomSignature">底部添加公众号签名</label>
+                </div>
+                <div class="setting-item">
+                    <input type="checkbox" id="keepImages" checked />
+                    <label for="keepImages">保留图片</label>
+                </div>
+                <div class="setting-item">
+                    <input type="checkbox" id="compactSpacing" />
+                    <label for="compactSpacing">紧凑行间距</label>
+                </div>
+            </div>
+        </div>
+
+        <div id="statusBox" class="status"></div>
+
+        <div class="content-wrapper">
+            <div class="panel">
+                <h3>HTML 输出（复制到公众号）</h3>
+                <div class="textarea-container">
+                    <textarea id="outputHtml" placeholder="转换后的HTML会显示在这里，点击复制按钮复制"></textarea>
+                </div>
+                <div class="action-bar">
+                    <button class="btn btn-secondary" onclick="copyHtml()">复制HTML</button>
+                    <button class="btn btn-secondary" onclick="clearOutput()">清空</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>效果预览</h3>
+                <div class="preview-area wechat-preview" id="previewArea"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 提取飞书文档token
+        function parseFeishuUrl(url) {
+            try {
+                // 支持多种飞书链接格式
+                // https://bytedance.feishu.cn/docs/abc123
+                // https://bytedance.feishu.cn/docx/abc123
+                // https://name.feishu.cn/wiki/abc123
+                const patterns = [
+                    /\/docs\/([a-zA-Z0-9]+)/,
+                    /\/docx\/([a-zA-Z0-9]+)/,
+                    /\/wiki\/([a-zA-Z0-9]+)/
+                ];
+
+                for (const pattern of patterns) {
+                    const match = url.match(pattern);
+                    if (match) {
+                        return match[1];
+                    }
+                }
+
+                // 尝试从查询参数提取
+                const urlObj = new URL(url);
+                const docToken = urlObj.searchParams.get('doc');
+                if (docToken) return docToken;
+
+                return null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // 转换飞书文档为公众号格式
+        async function convert() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) {
+                showStatus('请输入飞书文档链接', 'error');
+                return;
+            }
+
+            const docToken = parseFeishuUrl(url);
+            if (!docToken) {
+                showStatus('无法识别飞书文档链接，请检查格式是否正确', 'error');
+                return;
+            }
+
+            showStatus('正在获取文档内容...', 'loading');
+            document.getElementById('convertBtn').disabled = true;
+
+            try {
+                // 使用公开文档API获取内容
+                // 由于浏览器跨域限制，需要通过公共CORS代理
+                const corsProxies = [
+                    'https://api.allorigins.win/raw?url=',
+                    'https://corsproxy.io/?',
+                ];
+
+                // 飞书公开文档URL
+                const feishuApiUrl = `https://open.feishu.cn/open-apis/docx/v1/documents/${docToken}/raw`;
+                let response = null;
+                let html = '';
+
+                // 尝试不同的代理
+                for (const proxy of corsProxies) {
+                    try {
+                        response = await fetch(proxy + encodeURIComponent(feishuApiUrl));
+                        if (response.ok) {
+                            html = await response.text();
+                            break;
+                        }
+                    } catch (e) {
+                        console.log('Proxy failed:', proxy, e);
+                        continue;
+                    }
+                }
+
+                if (!html) {
+                    throw new Error('获取文档失败，请确保文档已设置为公开分享');
+                }
+
+                // 解析并转换为公众号格式
+                const convertedHtml = convertToWechatFormat(html);
+                const previewHtml = convertedHtml;
+
+                document.getElementById('outputHtml').value = convertedHtml;
+                document.getElementById('previewArea').innerHTML = previewHtml;
+
+                showStatus('转换成功！复制左侧HTML到公众号编辑器即可', 'success');
+            } catch (error) {
+                console.error('Conversion error:', error);
+                showStatus('转换失败: ' + error.message, 'error');
+            } finally {
+                document.getElementById('convertBtn').disabled = false;
+            }
+        }
+
+        // 转换为公众号格式
+        function convertToWechatFormat(html) {
+            // 创建临时DOM解析
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            // 应用设置
+            const addTopBorder = document.getElementById('addTopBorder').checked;
+            const addBottomSignature = document.getElementById('addBottomSignature').checked;
+            const keepImages = document.getElementById('keepImages').checked;
+            const compactSpacing = document.getElementById('compactSpacing').checked;
+
+            let result = '';
+
+            // 如果需要顶部边框
+            if (addTopBorder) {
+                result += '<hr style="border: none; border-top: 1px solid #e6e6e6; margin: 15px 0;" />\n';
+            }
+
+            // 提取主要内容并转换
+            const elements = doc.body.children;
+            for (const el of elements) {
+                result += processElement(el, keepImages);
+            }
+
+            // 添加底部签名
+            if (addBottomSignature) {
+                result += '\n<hr style="border: none; border-top: 1px solid #e6e6e6; margin: 30px 0;" />\n';
+                result += '<p style="text-align: center; color: #999; font-size: 14px;">关注我，每天搞定一道高中题</p>\n';
+            }
+
+            return result;
+        }
+
+        // 处理单个元素
+        function processElement(el, keepImages) {
+            const tag = el.tagName.toLowerCase();
+            let html = '';
+
+            switch (tag) {
+                case 'h1':
+                case 'h2':
+                case 'h3':
+                case 'h4':
+                case 'h5':
+                case 'h6':
+                    const level = tag;
+                    const text = el.innerHTML;
+                    html = `<${level}>${text}</${level}>\n`;
+                    break;
+
+                case 'p':
+                    if (el.innerHTML.trim() === '') break;
+                    html = `<p>${el.innerHTML}</p>\n`;
+                    break;
+
+                case 'img':
+                    if (!keepImages) break;
+                    const src = el.getAttribute('src') || el.getAttribute('data-src');
+                    if (src) {
+                        // 确保图片URL是完整的
+                        const fullSrc = src.startsWith('http') ? src : `https:${src}`;
+                        html = `<img src="${fullSrc}" alt="${el.alt || ''}" />\n`;
+                    }
+                    break;
+
+                case 'blockquote':
+                    html = `<blockquote>${el.innerHTML}</blockquote>\n`;
+                    break;
+
+                case 'pre':
+                    html = `<pre>${el.innerHTML}</pre>\n`;
+                    break;
+
+                case 'code':
+                    html = `<code>${el.innerHTML}</code>\n`;
+                    break;
+
+                case 'ul':
+                    html = `<ul>\n${el.innerHTML}</ul>\n`;
+                    break;
+
+                case 'ol':
+                    html = `<ol>\n${el.innerHTML}</ol>\n`;
+                    break;
+
+                case 'li':
+                    html = `<li>${el.innerHTML}</li>\n`;
+                    break;
+
+                case 'a':
+                    html = `<a href="${el.getAttribute('href')}" target="_blank">${el.innerHTML}</a>\n`;
+                    break;
+
+                case 'br':
+                    html = '<br />\n';
+                    break;
+
+                case 'hr':
+                    html = '<hr />\n';
+                    break;
+
+                case 'table':
+                    html = `<table>${el.innerHTML}</table>\n`;
+                    break;
+
+                case 'thead':
+                case 'tbody':
+                case 'tr':
+                case 'th':
+                case 'td':
+                    html = `<${tag}>${el.innerHTML}</${tag}>\n`;
+                    break;
+
+                case 'div':
+                case 'span':
+                    // 递归处理子元素
+                    for (const child of el.children) {
+                        html += processElement(child, keepImages);
+                    }
+                    if (el.textContent.trim() && !el.children.length) {
+                        html += el.textContent;
+                    }
+                    break;
+
+                default:
+                    // 其他标签保留内容
+                    for (const child of el.children) {
+                        html += processElement(child, keepImages);
+                    }
+                    break;
+            }
+
+            return html;
+        }
+
+        // 复制HTML到剪贴板
+        async function copyHtml() {
+            const textarea = document.getElementById('outputHtml');
+            const html = textarea.value;
+
+            if (!html) {
+                showStatus('没有可复制的内容', 'error');
+                return;
+            }
+
+            try {
+                // 创建隐藏元素用于复制富文本
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                document.body.appendChild(tempDiv);
+
+                const selection = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(tempDiv);
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                document.execCommand('copy');
+                selection.removeAllRanges();
+                document.body.removeChild(tempDiv);
+
+                showStatus('已复制到剪贴板！现在可以粘贴到公众号编辑器了', 'success');
+            } catch (e) {
+                // 降级为纯文本复制
+                navigator.clipboard.writeText(html).then(() => {
+                    showStatus('已复制到剪贴板', 'success');
+                }).catch(err => {
+                    showStatus('复制失败，请手动复制', 'error');
+                });
+            }
+        }
+
+        // 清空输出
+        function clearOutput() {
+            document.getElementById('outputHtml').value = '';
+            document.getElementById('previewArea').innerHTML = '';
+            document.getElementById('statusBox').classList.remove('show');
+        }
+
+        // 显示状态
+        function showStatus(message, type) {
+            const statusBox = document.getElementById('statusBox');
+            statusBox.className = `status ${type} show`;
+            statusBox.textContent = message;
+        }
+
+        // 预览更新
+        function updatePreview() {
+            const html = document.getElementById('outputHtml').value;
+            document.getElementById('previewArea').innerHTML = html;
+        }
+
+        // 监听输入框回车
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                convert();
+            }
+        });
+
+        // 输出变化时更新预览
+        document.getElementById('outputHtml').addEventListener('input', updatePreview);
+    </script>
+</body>
+</html>
