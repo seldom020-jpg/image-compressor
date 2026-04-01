@@ -1029,7 +1029,7 @@
         <!-- 配额警告 -->
         <div class="quota-warning" id="quotaWarning">
             <h4>⚠️ 免费额度已用完</h4>
-            <p>您已用完赠送的 30 次免费压缩额度。升级到终身会员即可无限次使用。</p>
+            <p id="quotaExhaustedDesc">您已用完赠送的免费压缩额度。升级到终身会员即可无限次使用。</p>
             <button class="btn-upgrade" onclick="openUpgradeModal()">立即升级 - 只需 $9.9</button>
         </div>
 
@@ -2134,7 +2134,7 @@
                 console.error('Failed to load stats', e);
             }
 
-            // 默认值
+            // 默认值：未登录游客5次，已登录用户30次
             const defaultStats = {
                 totalImages: 0,
                 totalSavedBytes: 0,
@@ -2302,7 +2302,7 @@
                 html = `
                     <h3 style="color: #1e3c72; margin-bottom: 15px;">🎁 免费试用</h3>
                     <p style="font-size: 16px; color: #333; margin-bottom: 15px;">
-                        您还剩余 <strong style="color: ${remaining <= 5 ? '#dc3545' : '#667eea'}">${remaining}</strong> 次免费压缩机会
+                        ${currentUser ? '已登录Google账号' : '未登录游客'}，您还剩余 <strong style="color: ${remaining <= 5 ? '#dc3545' : '#667eea'}">${remaining}</strong> 次免费压缩机会
                     </p>
                     <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 15px 0;">
                         <h4 style="color: #1e3c72; margin-bottom: 10px;">升级终身会员只需 <span style="color: #f5576c; font-size: 28px; font-weight: bold;">$9.9</span></h4>
