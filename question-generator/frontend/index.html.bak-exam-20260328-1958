@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 题库生成器 - 从文档自动生成考试题</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📝 AI 题库生成器</h1>
+      <p>上传 Word/PDF/Excel 文档，自动生成考试题目</p>
+    </header>
+
+    <main>
+      <!-- 上传区域 -->
+      <section class="upload-section">
+        <div id="dropZone" class="drop-zone">
+          <div class="drop-zone-content">
+            <div class="icon">📁</div>
+            <p>拖拽文件到这里，或点击选择文件</p>
+            <p class="hint">支持 PDF, Word(.doc/.docx), Excel(.xls/.xlsx), Txt, JPG, PNG, GIF 图片（拍照扫描直接出题）</p>
+            <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.webp,.bmp" multiple hidden>
+          </div>
+        </div>
+        <div id="fileInfo" class="file-info" style="display: none;">
+          <span id="fileName"></span>
+          <button id="removeFile" class="btn-remove">✕</button>
+        </div>
+      </section>
+
+      <!-- 配置选项 -->
+      <section class="config-section">
+        <div class="form-group">
+          <label>题型（勾选开启，输入自定义题量）</label>
+          <div class="checkbox-group custom-count-group">
+            <label>
+              <input type="checkbox" name="questionTypes" value="single" checked class="type-checkbox">
+              单选题
+              <input type="number" name="singleCount" min="0" max="50" value="10" class="type-count-input">
+            </label>
+            <label>
+              <input type="checkbox" name="questionTypes" value="multiple" class="type-checkbox">
+              多选题
+              <input type="number" name="multipleCount" min="0" max="50" value="5" class="type-count-input">
+            </label>
+            <label>
+              <input type="checkbox" name="questionTypes" value="judgment" class="type-checkbox">
+              判断题
+              <input type="number" name="judgmentCount" min="0" max="50" value="3" class="type-count-input">
+            </label>
+            <label>
+              <input type="checkbox" name="questionTypes" value="essay" class="type-checkbox">
+              简答题
+              <input type="number" name="essayCount" min="0" max="50" value="2" class="type-count-input">
+            </label>
+          </div>
+          <div class="total-count-info">总题数: <span id="totalCount">10</span></div>
+        </div>
+
+        <div id="fileRatioGroup" class="form-group" style="display: none;">
+          <label>多文件出题比例（已选择 <span id="fileCountDisplay">0</span> 个文件）</label>
+          <div id="fileRatioInputs" class="file-ratio-group">
+            <!-- 动态生成 -->
+          </div>
+          <p class="hint">比例总和会自动归一化，留空则按内容长度自动分配</p>
+        </div>
+
+        <div class="form-group">
+          <label>难度</label>
+          <div class="radio-group">
+            <label><input type="radio" name="difficulty" value="easy"> 简单</label>
+            <label><input type="radio" name="difficulty" value="medium" checked> 中等</label>
+            <label><input type="radio" name="difficulty" value="hard"> 困难</label>
+          </div>
+        </div>
+
+        <button id="generateBtn" class="btn-generate" disabled>
+          <span id="generateText">请先上传文件</span>
+          <span id="generateLoading" class="loading" style="display: none;">生成中...</span>
+        </button>
+      </section>
+
+      <!-- 结果区域 -->
+      <section id="resultSection" class="result-section" style="display: none;">
+        <div class="result-header">
+          <h2>生成结果</h2>
+          <div class="result-actions">
+            <button id="toggleAnswers" class="btn-toggle-answers">显示答案</button>
+            <button id="printBtn" class="btn-print">打印</button>
+            <button id="exportJson" class="btn-export">导出 JSON</button>
+            <button id="exportTxt" class="btn-export">导出 TXT</button>
+            <button id="exportXlsx" class="btn-export">导出 Excel</button>
+          </div>
+        </div>
+        <div id="questionsList" class="questions-list"></div>
+      </section>
+
+      <!-- 错误提示 -->
+      <div id="errorToast" class="error-toast" style="display: none;"></div>
+    </main>
+
+    <footer>
+      <p>Powered by AI</p>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

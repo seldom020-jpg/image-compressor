@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金属管道/容器剩余寿命评估计算器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .unit {
+            color: #666;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .result-section {
+            background: #e8f4f8;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        .result-value.warning {
+            color: #ffc107;
+        }
+
+        .result-value.danger {
+            color: #dc3545;
+        }
+
+        .result-value.success {
+            color: #28a745;
+        }
+
+        .assessment-level {
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+
+        .level-excellent {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .level-good {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .level-poor {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .report-section {
+            grid-column: 1 / -1;
+            background: #fff;
+            border: 2px solid #e9ecef;
+        }
+
+        .report-content {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.8;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .table th,
+        .table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table th {
+            background: #e9ecef;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏭 金属管道/容器剩余寿命评估计算器</h1>
+            <p>基于壁厚检测数据的腐蚀速率计算与剩余寿命评估系统 | 符合GB/T 30579-2022标准</p>
+        </div>
+
+        <div style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 0 30px; margin-top: -10px;">
+            <h3 style="color: #856404; margin-bottom: 10px;">📌 腐蚀裕量专项说明</h3>
+            <p style="font-size: 14px; color: #856404; line-height: 1.6;">
+                根据GB 50316-2000（2008年版）《工业金属管道设计规范》要求：<strong>碳钢/低合金钢管道腐蚀裕量不宜小于1.5mm</strong>。如设计未预留腐蚀裕量，请在评估时将安全系数提高至2.0，并将检测周期缩短50%。
+                <a href="javascript:void(0)" onclick="document.getElementById('corrosionGuide').style.display = document.getElementById('corrosionGuide').style.display === 'none' ? 'block' : 'none'" style="color: #0056b3; text-decoration: underline; margin-left: 10px;">查看详细处理规范</a>
+            </p>
+        </div>
+
+        <div id="corrosionGuide" style="display: none; background: #f8f9fa; padding: 20px; margin: 0 30px; border: 1px solid #dee2e6; border-top: none;">
+            <h4 style="color: #1e3c72; margin-bottom: 15px;">🔍 无腐蚀裕量管道处理规范</h4>
+            <div style="font-size: 13px; line-height: 1.8;">
+                <h5 style="margin: 10px 0; color: #495057;">一、合规性认定</h5>
+                <p>✅ 允许无腐蚀裕量的场景：腐蚀速率<0.05mm/年、采用有效防腐涂层、不锈钢材质、设计寿命≤3年的临时管道</p>
+                <p>❌ 属于设计缺陷的场景：碳钢输送腐蚀性介质、设计寿命≥10年的永久管道、存在腐蚀风险未采取措施</p>
+                
+                <h5 style="margin: 10px 0; color: #495057;">二、处理措施</h5>
+                <table class="table" style="font-size: 12px;">
+                    <thead>
+                        <tr>
+                            <th>评估结果</th>
+                            <th>处理措施</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>腐蚀速率<0.05mm/年，壁厚充足</td>
+                            <td>正常运行，检测周期缩短50%</td>
+                        </tr>
+                        <tr>
+                            <td>腐蚀速率0.05~0.1mm/年，剩余寿命≥5年</td>
+                            <td>安全系数提高至2.0，加强监测</td>
+                        </tr>
+                        <tr>
+                            <td>腐蚀速率>0.1mm/年，剩余寿命<3年</td>
+                            <td>限期整改，制定更换计划</td>
+                        </tr>
+                        <tr>
+                            <td>壁厚接近最小允许值</td>
+                            <td>立即降压运行，6个月内更换</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h5 style="margin: 10px 0; color: #495057;">三、标准依据</h5>
+                <p>• GB 50316-2000（2008年版）《工业金属管道设计规范》第3.2.2条</p>
+                <p>• GB/T 30579-2022《承压设备损伤模式识别》第6.3.2条</p>
+                <p>• TSG 31-2026《压力管道安全技术监察规程》</p>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- 输入表单 -->
+            <div class="section">
+                <h2 class="section-title">📝 基础参数输入</h2>
+                
+                <div class="form-group">
+                    <label>设备类型</label>
+                    <select id="equipmentType">
+                        <option value="pipe">压力管道</option>
+                        <option value="vessel">压力容器</option>
+                        <option value="tank">存储储罐</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>设备名称/编号</label>
+                    <input type="text" id="equipmentName" placeholder="例如：输油管道P-101">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>设计压力 <span class="unit">(MPa)</span></label>
+                        <input type="number" id="designPressure" step="0.1" value="1.6">
+                    </div>
+                    <div class="form-group">
+                        <label>设计温度 <span class="unit">(℃)</span></label>
+                        <input type="number" id="designTemp" step="1" value="80">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>材料牌号</label>
+                    <select id="material">
+                        <option value="Q235">Q235 碳素结构钢</option>
+                        <option value="Q345">Q345 低合金钢</option>
+                        <option value="20#">20# 优质碳素钢</option>
+                        <option value="16MnR">16MnR 压力容器钢</option>
+                        <option value="304">304 不锈钢</option>
+                        <option value="316L">316L 不锈钢</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>公称直径 <span class="unit">(mm)</span></label>
+                        <input type="number" id="diameter" step="1" value="200">
+                    </div>
+                    <div class="form-group">
+                        <label>设计壁厚 <span class="unit">(mm)</span></label>
+                        <input type="number" id="designThickness" step="0.1" value="8.0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>最小允许壁厚 <span class="unit">(mm)</span></label>
+                        <input type="number" id="minAllowThickness" step="0.1" value="4.0">
+                        <div class="hint">根据强度计算得出的最小壁厚</div>
+                    </div>
+                    <div class="form-group">
+                        <label>腐蚀裕量 <span class="unit">(mm)</span></label>
+                        <input type="number" id="corrosionAllowance" step="0.1" value="2.0">
+                        <div class="hint">设计时预留的腐蚀裕量，如设计未预留请填0，系统将自动提高安全系数</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>投用年份</label>
+                        <input type="number" id="commissionYear" step="1" value="2010">
+                    </div>
+                    <div class="form-group">
+                        <label>检测年份</label>
+                        <input type="number" id="inspectYear" step="1" value="2024">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>实测最小壁厚 <span class="unit">(mm)</span></label>
+                    <input type="number" id="measuredThickness" step="0.1" value="5.8">
+                    <div class="hint">超声波测厚得到的最小壁厚值</div>
+                </div>
+
+                <div class="form-group">
+                    <label>腐蚀环境</label>
+                    <select id="corrosionEnv">
+                        <option value="mild">轻度腐蚀（大气、清水）</option>
+                        <option value="moderate">中度腐蚀（含盐、弱酸）</option>
+                        <option value="severe">重度腐蚀（强酸、强碱、高硫）</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>报告标题</label>
+                        <input type="text" id="reportTitle" placeholder="金属管道/容器剩余寿命评估报告">
+                        <div class="hint">留空使用默认标题</div>
+                    </div>
+                    <div class="form-group">
+                        <label>评估单位</label>
+                        <input type="text" id="companyName" placeholder="例如：XX检测有限公司">
+                        <div class="hint">自定义评估报告出具单位</div>
+                    </div>
+                </div>
+
+                <!-- 安全附件信息 -->
+                <div class="section" style="margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 8px;">
+                    <h3 style="font-size: 16px; margin-bottom: 10px; color: #1e3c72;">🔒 安全附件信息（可选）</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>安全阀校验有效期至</label>
+                            <input type="number" id="safetyValveYear" placeholder="例如：2026">
+                            <div class="hint">填写年份，留空表示无此项</div>
+                        </div>
+                        <div class="form-group">
+                            <label>压力表校验有效期至</label>
+                            <input type="number" id="pressureGaugeYear" placeholder="例如：2025">
+                            <div class="hint">填写年份，留空表示无此项</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>爆破片更换日期</label>
+                            <input type="number" id="ruptureDiscYear" placeholder="例如：2023">
+                            <div class="hint">填写更换年份，留空表示无此项</div>
+                        </div>
+                        <div class="form-group">
+                            <label>紧急切断阀状态</label>
+                            <select id="emergencyValve">
+                                <option value="">未安装/不适用</option>
+                                <option value="good">正常完好</option>
+                                <option value="fault">存在缺陷</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="calculate()">🔍 开始计算</button>
+                    <button class="btn btn-secondary" onclick="resetForm()">🔄 重置表单</button>
+                </div>
+            </div>
+
+            <!-- 计算结果 -->
+            <div class="section result-section">
+                <h2 class="section-title">📊 计算结果</h2>
+                
+                <div class="result-item">
+                    <div class="result-label">已使用年限</div>
+                    <div class="result-value" id="usedYears">-</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">累计腐蚀量</div>
+                    <div class="result-value" id="totalCorrosion">-</div>
+                    <span class="unit">mm</span>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">平均腐蚀速率</div>
+                    <div class="result-value" id="corrosionRate">-</div>
+                    <span class="unit">mm/年</span>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">腐蚀速率等级</div>
+                    <div class="result-value" id="corrosionLevel">-</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">剩余可腐蚀厚度</div>
+                    <div class="result-value" id="remainingThickness">-</div>
+                    <span class="unit">mm</span>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">剩余使用寿命</div>
+                    <div class="result-value" id="remainingLife">-</div>
+                    <span class="unit">年</span>
+                </div>
+
+                <div id="assessmentLevel" class="assessment-level">
+                    请先进行计算
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">下次检测建议时间</div>
+                    <div class="result-value" id="nextInspect">-</div>
+                </div>
+            </div>
+
+            <!-- 评估报告 -->
+            <div class="section report-section">
+                <h2 class="section-title">📋 完整评估报告</h2>
+                <div class="btn-group" style="margin-bottom: 15px;">
+                    <button class="btn btn-primary" onclick="exportReport('pdf')">📄 导出PDF</button>
+                    <button class="btn btn-primary" onclick="exportReport('txt')">📝 导出TXT</button>
+                </div>
+                <div id="reportContent" class="report-content">
+请先输入参数并点击"开始计算"，系统将自动生成完整的评估报告。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 材料许用应力数据库 (MPa) - 根据GB 50316-2000 (2008版)
+        const materialStress = {
+            'Q235': 113,
+            'Q345': 170,
+            '20#': 130,
+            '16MnR': 170,
+            '304': 137,
+            '316L': 118
+        };
+
+        // 焊缝系数根据GB 50316-2000表5.0.2
+        const weldFactorTable = {
+            'pipe': 0.85,      // 压力管道 - 双面焊
+            'vessel': 0.85,    // 压力容器 - 双面焊对接接头
+            'tank': 0.9        // 储罐 - 优质焊接
+        };
+
+        // 根据GB/T 30579-2022 表13 腐蚀速率等级划分（mm/年）
+        const corrosionRateClass = {
+            low: 0.05,      // 轻度腐蚀
+            moderate: 0.1,  // 中度腐蚀
+            high: 0.3       // 高度腐蚀
+        };
+
+        function calculate() {
+            // 获取输入值
+            const equipmentType = document.getElementById('equipmentType').value;
+            const equipmentName = document.getElementById('equipmentName').value || '未命名设备';
+            const designPressure = parseFloat(document.getElementById('designPressure').value);
+            const designTemp = parseFloat(document.getElementById('designTemp').value);
+            const material = document.getElementById('material').value;
+            const diameter = parseFloat(document.getElementById('diameter').value);
+            const designThickness = parseFloat(document.getElementById('designThickness').value);
+            const minAllowThickness = parseFloat(document.getElementById('minAllowThickness').value);
+            const corrosionAllowance = parseFloat(document.getElementById('corrosionAllowance').value);
+            const commissionYear = parseInt(document.getElementById('commissionYear').value);
+            const inspectYear = parseInt(document.getElementById('inspectYear').value);
+            const measuredThickness = parseFloat(document.getElementById('measuredThickness').value);
+            const corrosionEnv = document.getElementById('corrosionEnv').value;
+            
+            // 获取安全附件信息
+            const safetyValveYear = document.getElementById('safetyValveYear').value ? parseInt(document.getElementById('safetyValveYear').value) : null;
+            const pressureGaugeYear = document.getElementById('pressureGaugeYear').value ? parseInt(document.getElementById('pressureGaugeYear').value) : null;
+            const ruptureDiscYear = document.getElementById('ruptureDiscYear').value ? parseInt(document.getElementById('ruptureDiscYear').value) : null;
+            const emergencyValve = document.getElementById('emergencyValve').value;
+
+            // 1. 基础计算 - 符合GB/T 30579-2022 第7章 腐蚀速率计算
+            const usedYears = inspectYear - commissionYear;
+            const totalCorrosion = designThickness - measuredThickness;
+            
+            // 2. 腐蚀速率计算（GB/T 30579-2022 第7.2节 公式（11））
+            let corrosionRate;
+            if (usedYears < 2) {
+                // 服役时间不足2年，采用经验值（参考GB/T 30579-2022 表13）
+                const expRates = { 'mild': 0.03, 'moderate': 0.1, 'severe': 0.3 };
+                corrosionRate = expRates[corrosionEnv];
+            } else {
+                corrosionRate = totalCorrosion / usedYears;
+                // 环境修正系数（GB/T 30579-2022 表14）
+                const envFactors = { 'mild': 1.0, 'moderate': 1.1, 'severe': 1.3 };
+                corrosionRate = corrosionRate * envFactors[corrosionEnv];
+            }
+            corrosionRate = parseFloat(corrosionRate.toFixed(4));
+
+            // 3. 计算理论最小壁厚（GB 50316-2000 公式（5.0.1））
+            // δ = (P * D) / (2 * [σ]t * φ - P) + C
+            const S = materialStress[material];
+            const phi = weldFactorTable[equipmentType];
+            const c = corrosionAllowance;
+            let theoreticalMinThickness;
+            
+            if (equipmentType === 'pipe' || equipmentType === 'tank') {
+                // 圆柱壳/管道壁厚公式
+                theoreticalMinThickness = (designPressure * diameter) / (2 * S * phi - designPressure) + c;
+            } else if (equipmentType === 'vessel') {
+                // 压力容器壁厚公式（标准一致）
+                theoreticalMinThickness = (designPressure * diameter) / (2 * S * phi - 0.5 * designPressure) + c;
+            }
+            theoreticalMinThickness = parseFloat(theoreticalMinThickness.toFixed(2));
+            
+            // 4. 附加壁厚裕量（GB/T 30579-2022 第6.3.2条）
+            // 根据标准要求增加5%壁厚裕量，最小0.5mm
+            const additionalMargin = Math.max(0.5, designThickness * 0.05);
+            const requiredMinThickness = Math.max(minAllowThickness, theoreticalMinThickness + additionalMargin);
+            
+            // 5. 剩余可腐蚀厚度（GB/T 30579-2022 第8.2节）
+            const remainingThickness = measuredThickness - requiredMinThickness;
+            
+            // 6. 剩余寿命计算（GB/T 30579-2022 第8.3节 公式（18））
+            // Rt = δr / (v * F)
+            // δr: 剩余可腐蚀厚度 v: 腐蚀速率 F: 安全系数
+            let remainingLife;
+            if (remainingThickness <= 0) {
+                remainingLife = 0;
+            } else {
+                // 安全系数（GB/T 30579-2022 要求F≥1.5，无腐蚀裕量时F≥2.0）
+                let safetyFactor = corrosionAllowance <= 0 ? 2.0 : 1.5;
+                remainingLife = remainingThickness / (corrosionRate * safetyFactor);
+            }
+            remainingLife = Math.max(0, parseFloat(remainingLife.toFixed(1)));
+
+            // 7. 腐蚀速率等级（GB/T 30579-2022 表13）
+            let corrosionLevel;
+            if (corrosionRate <= corrosionRateClass.low) {
+                corrosionLevel = '轻度腐蚀';
+            } else if (corrosionRate <= corrosionRateClass.moderate) {
+                corrosionLevel = '中度腐蚀';
+            } else if (corrosionRate <= corrosionRateClass.high) {
+                corrosionLevel = '高度腐蚀';
+            } else {
+                corrosionLevel = '极严重腐蚀';
+            }
+
+            // 8. 评估等级 - 符合GB/T 30579-2022 第9章 寿命分级
+            let level, levelClass;
+            if (remainingLife >= 15) {
+                level = '1级（优秀）- 剩余寿命≥15年';
+                levelClass = 'level-excellent';
+            } else if (remainingLife >= 9) {
+                level = '2级（良好）- 剩余寿命9~15年';
+                levelClass = 'level-excellent';
+            } else if (remainingLife >= 4) {
+                level = '3级（合格）- 剩余寿命4~9年';
+                levelClass = 'level-good';
+            } else if (remainingLife >= 1) {
+                level = '4级（关注）- 剩余寿命1~4年';
+                levelClass = 'level-good';
+            } else {
+                level = '5级（不合格）- 剩余寿命<1年';
+                levelClass = 'level-poor';
+            }
+
+            // 9. 检测周期确定 - 符合GB/T 30579-2022 第10章
+            // 根据TSG 31-2026 《压力管道安全技术监察规程》
+            let nextInspectYears;
+            if (equipmentType === 'pipe') {
+                // 压力管道检测周期（TSG 31-2026）
+                if (remainingLife >= 15) {
+                    nextInspectYears = 6;
+                } else if (remainingLife >= 9) {
+                    nextInspectYears = 3;
+                } else if (remainingLife >= 4) {
+                    nextInspectYears = 2;
+                } else if (remainingLife >= 1) {
+                    nextInspectYears = 1;
+                } else {
+                    nextInspectYears = 0.5;
+                }
+            } else if (equipmentType === 'vessel') {
+                // 固定式压力容器检测周期（TSG 21-2016，现行有效）
+                if (remainingLife >= 15) {
+                    nextInspectYears = 6;
+                } else if (remainingLife >= 9) {
+                    nextInspectYears = 4;
+                } else if (remainingLife >= 4) {
+                    nextInspectYears = 2;
+                } else if (remainingLife >= 1) {
+                    nextInspectYears = 1;
+                } else {
+                    nextInspectYears = 0.5;
+                }
+            } else { // tank
+                // 储罐检测周期（GB/T 30579-2022）
+                if (remainingLife >= 15) {
+                    nextInspectYears = 6;
+                } else if (remainingLife >= 9) {
+                    nextInspectYears = 3;
+                } else if (remainingLife >= 4) {
+                    nextInspectYears = 2;
+                } else if (remainingLife >= 1) {
+                    nextInspectYears = 1;
+                } else {
+                    nextInspectYears = 0.5;
+                }
+            }
+            // 无腐蚀裕量时检测周期缩短50%（GB 50316-2000 2008版要求）
+            if (corrosionAllowance <= 0) {
+                nextInspectYears = nextInspectYears * 0.5;
+            }
+            // 高度腐蚀缩短检测周期
+            if (corrosionRate > 0.1) {
+                nextInspectYears = nextInspectYears * 0.75;
+            }
+            nextInspectYears = parseFloat(nextInspectYears.toFixed(1));
+            const nextInspectYear = Math.round(inspectYear + nextInspectYears);
+
+            // 更新结果显示
+            document.getElementById('usedYears').textContent = usedYears + ' 年';
+            document.getElementById('totalCorrosion').textContent = totalCorrosion.toFixed(2);
+            document.getElementById('corrosionRate').textContent = corrosionRate.toFixed(4);
+            document.getElementById('corrosionLevel').textContent = corrosionLevel;
+            document.getElementById('remainingThickness').textContent = remainingThickness.toFixed(2);
+            
+            const lifeEl = document.getElementById('remainingLife');
+            lifeEl.textContent = remainingLife;
+            lifeEl.className = 'result-value ' + (remainingLife >= 10 ? 'success' : remainingLife >=5 ? 'warning' : 'danger');
+
+            const levelEl = document.getElementById('assessmentLevel');
+            levelEl.className = 'assessment-level ' + levelClass;
+            levelEl.textContent = `评估等级：${level} (剩余寿命 ${remainingLife} 年)`;
+
+            document.getElementById('nextInspect').textContent = `${nextInspectYear} 年 (${nextInspectYears} 年后)`;
+
+            // 生成报告
+            generateReport({
+                equipmentName,
+                equipmentType,
+                designPressure,
+                designTemp,
+                material,
+                diameter,
+                designThickness,
+                minAllowThickness,
+                corrosionAllowance,
+                commissionYear,
+                inspectYear,
+                measuredThickness,
+                corrosionEnv,
+                usedYears,
+                totalCorrosion,
+                corrosionRate,
+                corrosionLevel,
+                remainingThickness,
+                remainingLife,
+                level,
+                levelClass,
+                nextInspectYear,
+                nextInspectYears,
+                theoreticalMinThickness,
+                safetyValveYear,
+                pressureGaugeYear,
+                ruptureDiscYear,
+                emergencyValve,
+                currentYear: inspectYear
+            });
+        }
+
+        function generateReport(data) {
+            const envText = {
+                'mild': '轻度腐蚀（大气、清水）',
+                'moderate': '中度腐蚀（含盐、弱酸）',
+                'severe': '重度腐蚀（强酸、强碱、高硫）'
+            };
+
+            const typeText = {
+                'pipe': '压力管道',
+                'vessel': '压力容器',
+                'tank': '存储储罐'
+            };
+
+            // 获取用户自定义标题和评估单位
+            const userTitle = document.getElementById('reportTitle').value;
+            const userCompany = document.getElementById('companyName').value;
+            const reportTitle = userTitle || '金属管道/容器剩余寿命评估报告';
+            const company = userCompany || '金属设备寿命评估系统';
+
+            const report = `
+# ${reportTitle}
+
+## 一、设备基本信息
+----------------------------------------------------------------------
+设备名称/编号：${data.equipmentName}
+设备类型：${typeText[data.equipmentType]}
+设计压力：${data.designPressure} MPa
+设计温度：${data.designTemp} ℃
+材料牌号：${data.material}
+公称直径：${data.diameter} mm
+设计壁厚：${data.designThickness} mm
+最小允许壁厚：${data.minAllowThickness} mm
+腐蚀裕量：${data.corrosionAllowance} mm
+投用年份：${data.commissionYear} 年
+检测年份：${data.inspectYear} 年
+实测最小壁厚：${data.measuredThickness} mm
+腐蚀环境：${envText[data.corrosionEnv]}
+
+## 二、腐蚀速率计算结果
+----------------------------------------------------------------------
+### 1. 基础数据
+已使用年限：${data.usedYears} 年
+累计腐蚀量：${data.totalCorrosion.toFixed(2)} mm
+
+### 2. 腐蚀速率
+平均腐蚀速率：${data.corrosionRate.toFixed(4)} mm/年
+腐蚀速率等级：${data.corrosionLevel}（GB/T 30579-2022 表13）
+
+## 三、强度校核与剩余寿命评估
+----------------------------------------------------------------------
+### 1. 理论最小壁厚计算
+计算公式：${data.equipmentType === 'vessel' ? 'δ = (P·D)/(2·[σ]·φ - 0.5P) + C' : 'δ = (P·D)/(2·[σ]·φ - P) + C'}
+材料许用应力：${materialStress[data.material]} MPa
+焊缝系数：${weldFactorTable[data.equipmentType]}
+理论计算最小壁厚：${data.theoreticalMinThickness.toFixed(2)} mm
+附加裕量：${Math.max(0.5, data.designThickness * 0.05).toFixed(2)} mm
+允许最小壁厚：${Math.max(data.minAllowThickness, data.theoreticalMinThickness + Math.max(0.5, data.designThickness * 0.05)).toFixed(2)} mm
+
+### 2. 强度校验
+实测最小壁厚：${data.measuredThickness} mm
+强度校验结果：${data.measuredThickness >= data.theoreticalMinThickness ? '✅ 合格' : '❌ 不合格'}
+腐蚀裕量提示：${data.corrosionAllowance <= 0 ? '⚠️ 注意：设计未预留腐蚀裕量，系统已自动提高安全系数至2.0并缩短检测周期50%（GB 50316-2000要求）' : '✔️ 设计已预留腐蚀裕量'}
+
+### 3. 剩余寿命计算
+剩余可腐蚀厚度：${data.remainingThickness.toFixed(2)} mm
+剩余使用寿命：${data.remainingLife} 年
+评估等级：${data.level}（GB/T 30579-2022 第9章）
+
+## 四、安全附件状态评估
+----------------------------------------------------------------------
+${(() => {
+                let saftyHtml = '';
+                if (data.safetyValveYear) {
+                    const status = data.safetyValveYear >= data.currentYear ? '✅ 在有效期内' : '❌ 超期未检';
+                    saftyHtml += `安全阀：校验有效期至 ${data.safetyValveYear} 年 - ${status}
+`;
+                } else {
+                    saftyHtml += `安全阀：未提供信息/不适用
+`;
+                }
+                if (data.pressureGaugeYear) {
+                    const status = data.pressureGaugeYear >= data.currentYear ? '✅ 在有效期内' : '❌ 超期未检';
+                    saftyHtml += `压力表：校验有效期至 ${data.pressureGaugeYear} 年 - ${status}
+`;
+                } else {
+                    saftyHtml += `压力表：未提供信息/不适用
+`;
+                }
+                if (data.ruptureDiscYear) {
+                    const status = (data.currentYear - data.ruptureDiscYear) < 3 ? '✅ 更换周期内' : '⚠️ 超过2年建议更换';
+                    saftyHtml += `爆破片：上次更换年份 ${data.ruptureDiscYear} 年 - ${status}（TSG 21-2016要求：爆破片一般2~3年更换一次）
+`;
+                } else {
+                    saftyHtml += `爆破片：未提供信息/不适用
+`;
+                }
+                if (data.emergencyValve) {
+                    const statusText = {
+                        '': '未安装/不适用',
+                        'good': '✅ 正常完好',
+                        'fault': '❌ 存在缺陷需检修'
+                    };
+                    saftyHtml += `紧急切断阀：${statusText[data.emergencyValve]}
+`;
+                } else {
+                    saftyHtml += `紧急切断阀：未安装/不适用
+`;
+                }
+                // 安全附件总体结论
+                const hasExpired = 
+                    (data.safetyValveYear && data.safetyValveYear < data.currentYear) ||
+                    (data.pressureGaugeYear && data.pressureGaugeYear < data.currentYear) ||
+                    (data.emergencyValve === 'fault');
+                if (hasExpired) {
+                    saftyHtml += `
+⚠️ 结论：部分安全附件超期或存在缺陷，根据TSG特种设备安全技术规范要求，应立即停用并检验/更换合格附件后方可继续运行。`;
+                } else {
+                    saftyHtml += `
+✅ 结论：已提供的安全附件状态正常，符合规范要求。`;
+                }
+                return saftyHtml;
+            })()}
+
+## 五、检测建议
+----------------------------------------------------------------------
+下次检测时间：${data.nextInspectYear} 年（${data.nextInspectYears} 年后）
+检测周期依据：
+${data.equipmentType === 'pipe' ? '- 压力管道：符合TSG 31-2026《压力管道安全技术监察规程》' :
+ data.equipmentType === 'vessel' ? '- 压力容器：符合TSG 21-2016《固定式压力容器安全技术监察规程》（TSG 21-2026将于2026年6月1日实施）' :
+ '- 储罐：符合GB/T 30579-2022标准要求'}
+
+检测周期调整说明：
+${data.corrosionAllowance <= 0 ? '- 设计无腐蚀裕量，检测周期已缩短50%（GB 50316-2000要求）' : ''}
+${data.corrosionRate > 0.1 && data.corrosionAllowance > 0 ? '- 腐蚀速率大于0.1mm/年，检测周期已缩短25%' : ''}
+
+## 六、评估结论
+----------------------------------------------------------------------
+${data.level.includes('1级') || data.level.includes('2级') ? '✅ 设备状况良好，腐蚀速率处于正常范围，可安全运行，按标准规定周期检测即可。' :
+  data.level.includes('3级') ? '⚠️ 设备状况合格，剩余寿命充足，建议按推荐周期进行定期检测。' :
+  data.level.includes('4级') ? '⚡ 设备需要重点关注，剩余寿命有限，建议缩短检测周期，加强腐蚀监测。' :
+  '❌ 设备剩余寿命不足1年，已接近或低于安全允许值，建议立即进行风险评估，必要时维修或更换。'}
+
+## 七、计算依据标准
+----------------------------------------------------------------------
+1. GB/T 30579-2022《承压设备损伤模式识别》
+   - 腐蚀速率计算：第7章 腐蚀速率评估方法
+   - 剩余壁厚确定：第8.2节
+   - 剩余寿命预测：第8.3节 公式(18) R_t = δ_r / (v·F)
+   - 寿命分级：第9章
+   - 检测周期确定：第10章
+
+2. GB 50316-2000（2008年版）《工业金属管道设计规范》
+   - 最小壁厚计算公式：第5.0.1条
+   - 腐蚀裕量要求：第3.2.2条 碳钢不宜小于1.5mm
+
+3. 特种设备安全技术规范
+${data.equipmentType === 'pipe' ? '- TSG 31-2026《压力管道安全技术监察规程》' :
+ data.equipmentType === 'vessel' ? '- TSG 21-2016《固定式压力容器安全技术监察规程》' :
+ '- GB 50160《石油化工企业设计防火标准》（2018年版）'}
+
+## 八、注意事项
+----------------------------------------------------------------------
+1. 本评估基于**均匀腐蚀**假设，如存在点蚀、缝隙腐蚀、应力腐蚀、氢脆等局部腐蚀形式，需按GB/T 30579-2022相应损伤模式重新评估
+2. 当运行工况（压力、温度、介质成分、处理量）发生重大变化时，应重新进行寿命计算
+3. 建议建立壁厚检测数据库，连续监测腐蚀速率，绘制腐蚀趋势曲线，采用回归分析方法提高预测准确性
+4. 剩余寿命计算结果为理论预测值，实际使用寿命受实际运行条件影响可能存在±20%偏差
+5. 安全附件超期未检或失效的，即使壁厚评估合格，也应立即按特种设备规范要求整改
+6. 对于评估等级为5级的设备，应立即开展风险评估，采取降压运行、维修或更换等措施
+
+评估单位：${company}
+评估日期：${new Date().toLocaleDateString()}
+评估标准：GB/T 30579-2022《承压设备损伤模式识别与剩余寿命评估方法》
+            `;
+
+            document.getElementById('reportContent').textContent = report;
+        }
+
+        function resetForm() {
+            document.getElementById('equipmentName').value = '';
+            document.getElementById('reportTitle').value = '';
+            document.getElementById('companyName').value = '';
+            document.getElementById('safetyValveYear').value = '';
+            document.getElementById('pressureGaugeYear').value = '';
+            document.getElementById('ruptureDiscYear').value = '';
+            document.getElementById('emergencyValve').value = '';
+            document.getElementById('designPressure').value = '1.6';
+            document.getElementById('designTemp').value = '80';
+            document.getElementById('diameter').value = '200';
+            document.getElementById('designThickness').value = '8.0';
+            document.getElementById('minAllowThickness').value = '4.0';
+            document.getElementById('corrosionAllowance').value = '2.0';
+            document.getElementById('commissionYear').value = '2010';
+            document.getElementById('inspectYear').value = '2024';
+            document.getElementById('measuredThickness').value = '5.8';
+            
+            document.getElementById('usedYears').textContent = '-';
+            document.getElementById('totalCorrosion').textContent = '-';
+            document.getElementById('corrosionRate').textContent = '-';
+            document.getElementById('corrosionLevel').textContent = '-';
+            document.getElementById('remainingThickness').textContent = '-';
+            document.getElementById('remainingLife').textContent = '-';
+            document.getElementById('assessmentLevel').textContent = '请先进行计算';
+            document.getElementById('assessmentLevel').className = 'assessment-level';
+            document.getElementById('nextInspect').textContent = '-';
+            document.getElementById('reportContent').textContent = '请先输入参数并点击"开始计算"，系统将自动生成完整的评估报告。';
+        }
+
+        function exportReport(format = 'pdf') {
+            const reportContent = document.getElementById('reportContent').textContent;
+            const equipmentName = document.getElementById('equipmentName').value || '管道寿命评估';
+            const dateStr = new Date().toLocaleDateString();
+            
+            if (format === 'txt') {
+                // 导出文本文件
+                const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${equipmentName}_剩余寿命评估报告_${dateStr}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else if (format === 'pdf') {
+                // 导出PDF文件 - 使用html2canvas解决中文乱码和清晰度问题
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+                    
+                    // A4尺寸: 210mm × 297mm
+                    const margin = 10;
+                    const pageWidth = 210;
+                    const pageHeight = 297;
+                    const contentWidth = pageWidth - margin * 2;
+                    const contentHeight = pageHeight - margin * 2;
+                    
+                    // 创建临时容器，将报告转换为HTML格式保证排版正确
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.position = 'absolute';
+                    tempDiv.style.left = '-9999px';
+                    tempDiv.style.top = '-9999px';
+                    tempDiv.style.background = 'white';
+                    tempDiv.style.width = '794px'; // A4宽度 @96dpi
+                    tempDiv.style.padding = '30px';
+                    tempDiv.style.fontFamily = 'system-ui, "Microsoft YaHei", "SimHei", sans-serif';
+                    tempDiv.style.color = 'black';
+                    
+                    // 构建HTML，解析并去除markdown格式标记
+                    let html = '';
+                    let isFirstTitle = true;
+                    
+                    reportContent.split('\n').forEach(line => {
+                        let processedLine = line;
+                        // 去除markdown标题标记
+                        if (line.startsWith('# ')) {
+                            processedLine = line.substring(2);
+                            // 第一个标题（报告标题）使用大字号居中
+                            if (isFirstTitle) {
+                                html += `<div style="font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 20px; color: #1e3c72;">${escapeHtml(processedLine)}</div>`;
+                                isFirstTitle = false;
+                            } else {
+                                html += `<h1 style="font-size: 18px; margin: 15px 0 10px 0; color: #1e3c72;">${escapeHtml(processedLine)}</h1>`;
+                            }
+                        } else if (line.startsWith('## ')) {
+                            processedLine = line.substring(3);
+                            html += `<h2 style="font-size: 16px; margin: 15px 0 10px 0; color: #1e3c72;">${escapeHtml(processedLine)}</h2>`;
+                        } else if (line.startsWith('### ')) {
+                            processedLine = line.substring(4);
+                            html += `<h3 style="font-size: 15px; margin: 12px 0 8px 0; color: #1e3c72;">${escapeHtml(processedLine)}</h3>`;
+                        } else if (line.startsWith('------')) {
+                            html += `<hr style="border: none; border-top: 1px solid #ccc; margin: 10px 0;">`;
+                        } else if (line.trim() === '') {
+                            html += `<br>`;
+                        } else {
+                            html += `<div style="font-size: 14px; line-height: 1.6; margin: 2px 0;">${escapeHtml(processedLine)}</div>`;
+                        }
+                    });
+                    
+                    tempDiv.innerHTML = html;
+                    document.body.appendChild(tempDiv);
+                    
+                    // 使用html2canvas截图，3倍缩放保证高清
+                    html2canvas(tempDiv, {
+                        scale: 3,
+                        backgroundColor: 'white',
+                        logging: false
+                    }).then(canvas => {
+                        // 正确计算尺寸比例
+                        const imgWidthPx = canvas.width;      // 原图宽度（像素，已经乘以scale=3）
+                        const imgHeightPx = canvas.height;
+                        
+                        // A4宽度是 contentWidth 毫米，我们按宽度自适应
+                        const mmPerPixel = contentWidth / imgWidthPx;
+                        const totalHeightMM = imgHeightPx * mmPerPixel;
+                        
+                        const pageHeightMM = pageHeight - margin * 2;
+                        const pageHeightPx = Math.floor(pageHeightMM / mmPerPixel);
+                        
+                        // 当前使用正确切割方式修复
+                        let currentYpx = 0;
+                        const ctx = canvas.getContext('2d');
+                        
+                        while (currentYpx < imgHeightPx) {
+                            if (currentYpx > 0) {
+                                doc.addPage();
+                            }
+                            
+                            // 当前页高度，最后一页可能不足一页
+                            const chunkHeightPx = Math.min(pageHeightPx, imgHeightPx - currentYpx);
+                            const chunkHeightMM = chunkHeightPx * mmPerPixel;
+                            
+                            // 创建新canvas，创建白色背景
+                            const chunkCanvas = document.createElement('canvas');
+                            chunkCanvas.width = imgWidthPx;
+                            chunkCanvas.height = chunkHeightPx;
+                            const chunkCtx = chunkCanvas.getContext('2d');
+                            chunkCtx.fillStyle = 'white';
+                            chunkCtx.fillRect(0, 0, chunkCanvas.width, chunkCanvas.height);
+                            chunkCtx.drawImage(
+                                canvas, 
+                                0, currentYpx, imgWidthPx, chunkHeightPx,
+                                0, 0, imgWidthPx, chunkHeightPx
+                            );
+                            
+                            // 添加到PDF
+                            doc.addImage(chunkCanvas, 'JPEG', margin, margin, contentWidth, chunkHeightMM);
+                            currentYpx += pageHeightPx;
+                        }
+                        
+                        doc.save(`${equipmentName}_剩余寿命评估报告_${dateStr}.pdf`);
+                        document.body.removeChild(tempDiv);
+                    });
+                } catch (error) {
+                    console.error('PDF导出失败:', error);
+                    alert('PDF导出失败，请尝试导出TXT格式。错误信息：' + error.message);
+                    if (document.body.contains(tempDiv)) {
+                        document.body.removeChild(tempDiv);
+                    }
+                }
+            }
+        }
+        
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // 回车键触发计算
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                calculate();
+            }
+        });
+    </script>
+</body>
+</html>

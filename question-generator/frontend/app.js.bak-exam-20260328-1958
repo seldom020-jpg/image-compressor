@@ -1,0 +1,546 @@
+// DOM 元素
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const removeFile = document.getElementById('removeFile');
+const generateBtn = document.getElementById('generateBtn');
+const generateText = document.getElementById('generateText');
+const generateLoading = document.getElementById('generateLoading');
+const resultSection = document.getElementById('resultSection');
+const questionsList = document.getElementById('questionsList');
+const errorToast = document.getElementById('errorToast');
+const totalCountSpan = document.getElementById('totalCount');
+const fileRatioGroup = document.getElementById('fileRatioGroup');
+const fileCountDisplay = document.getElementById('fileCountDisplay');
+const fileRatioInputs = document.getElementById('fileRatioInputs');
+const exportJsonBtn = document.getElementById('exportJson');
+const exportTxtBtn = document.getElementById('exportTxt');
+const exportXlsxBtn = document.getElementById('exportXlsx');
+const toggleAnswersBtn = document.getElementById('toggleAnswers');
+const printBtn = document.getElementById('printBtn');
+
+// 状态
+let selectedFiles = [];
+let currentQuestions = null;
+let answersVisible = false;
+
+// API 基础 URL
+const API_BASE = window.location.origin;
+
+// 更新总题数显示 - 只有勾选的才计入总数
+function updateTotalCount() {
+  let total = 0;
+  ['single', 'multiple', 'judgment', 'essay'].forEach(type => {
+    const checkbox = document.querySelector(`input[name="questionTypes"][value="${type}"]`);
+    if (checkbox.checked) {
+      const input = document.querySelector(`input[name="${type}Count"]`);
+      let count = parseInt(input.value) || 0;
+      if (count <= 0) {
+        count = 1;
+        input.value = 1;
+      }
+      total += count;
+    }
+  });
+  totalCountSpan.textContent = total;
+  return total;
+}
+
+// 当勾选 checkbox 且输入是 0，自动给默认值 1 并更新总数
+document.querySelectorAll('.type-checkbox').forEach(el => {
+  el.addEventListener('change', (e) => {
+    updateTotalCount();
+  });
+});
+
+// 绑定题量输入变化事件，输入改变实时更新总数
+document.querySelectorAll('.type-checkbox, .type-count-input').forEach(el => {
+  el.addEventListener('change', updateTotalCount);
+  el.addEventListener('input', updateTotalCount);
+});
+
+// 更新文件比例输入区域
+function updateFileRatioInputs() {
+  if (selectedFiles.length <= 1) {
+    fileRatioGroup.style.display = 'none';
+    return;
+  }
+
+  fileRatioGroup.style.display = 'block';
+  fileCountDisplay.textContent = selectedFiles.length;
+
+  // 清空重新生成
+  fileRatioInputs.innerHTML = '';
+  selectedFiles.forEach((file, index) => {
+    const div = document.createElement('div');
+    div.className = 'file-ratio-item';
+    div.innerHTML = `
+      <label>文件 ${index + 1}: ${file.name}</label>
+      <input type="number" name="fileRatio${index}" min="0" step="0.1" placeholder="自动" class="file-ratio-input">
+    `;
+    fileRatioInputs.appendChild(div);
+  });
+}
+
+// 获取选中的配置（包含自定义题量）- 只有勾选了 checkbox 才包含
+function getConfig() {
+  const questionTypeCounts = {};
+  let totalCount = 0;
+
+  // 只有 checkbox 被勾选，并且题量 >0 才包含
+  ['single', 'multiple', 'judgment', 'essay'].forEach(type => {
+    const input = document.querySelector(`input[name="${type}Count"]`);
+    const checkbox = document.querySelector(`input[name="questionTypes"][value="${type}"]`);
+    let count = parseInt(input.value) || 0;
+
+    // 只有勾选了才会包含
+    if (checkbox.checked) {
+      // 如果勾选了但题量是 0，给默认 1
+      if (count <= 0) {
+        count = 1;
+        input.value = 1;
+      }
+      questionTypeCounts[type] = count;
+      totalCount += count;
+    }
+  });
+
+  console.log('✅ Frontend getConfig: questionTypeCounts =', questionTypeCounts);
+  console.log('✅ Frontend getConfig: totalCount =', totalCount);
+
+  // 获取文件比例配置
+  let fileRatios = [];
+  if (selectedFiles.length > 1) {
+    selectedFiles.forEach((file, index) => {
+      const input = document.querySelector(`input[name="fileRatio${index}"]`);
+      const ratio = parseFloat(input.value);
+      fileRatios.push(!isNaN(ratio) && ratio > 0 ? ratio : null);
+    });
+  }
+
+  const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+
+  return {
+    questionTypeCounts,
+    totalCount,
+    fileRatios,
+    difficulty
+  };
+}
+
+// 上传区域事件
+dropZone.addEventListener('click', () => {
+  fileInput.click();
+});
+
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('dragover');
+});
+
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const files = Array.from(e.dataTransfer.files);
+  handleFilesSelect(files);
+});
+
+fileInput.addEventListener('change', (e) => {
+  if (e.target.files.length > 0) {
+    handleFilesSelect(Array.from(e.target.files));
+  }
+});
+
+removeFile.addEventListener('click', (e) => {
+  e.stopPropagation();
+  selectedFiles = [];
+  fileInfo.style.display = 'none';
+  dropZone.style.display = 'block';
+  fileRatioGroup.style.display = 'none';
+  generateBtn.disabled = true;
+  generateText.textContent = '请先上传文件';
+});
+
+// 处理多文件选择
+function handleFilesSelect(files) {
+  const allowedExts = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+  let added = 0;
+
+  files.forEach(file => {
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+
+    if (!allowedExts.includes(ext)) {
+      showError(`不支持的文件类型: ${file.name}`);
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      showError(`文件过大: ${file.name} (不能超过 10MB)`);
+      return;
+    }
+
+    // 检查是否已经添加过同名文件
+    const exists = selectedFiles.find(f => f.name === file.name);
+    if (!exists) {
+      selectedFiles.push(file);
+      added++;
+    }
+  });
+
+  if (selectedFiles.length > 0) {
+    // 显示已选文件列表
+    if (selectedFiles.length === 1) {
+      fileName.textContent = selectedFiles[0].name;
+    } else {
+      fileName.textContent = `已选择 ${selectedFiles.length} 个文件`;
+    }
+    fileInfo.style.display = 'flex';
+    dropZone.style.display = 'none';
+    updateFileRatioInputs();
+    generateBtn.disabled = false;
+    generateText.textContent = '生成题目';
+  } else {
+    selectedFiles = [];
+    fileInfo.style.display = 'none';
+    dropZone.style.display = 'block';
+    fileRatioGroup.style.display = 'none';
+    generateBtn.disabled = true;
+    generateText.textContent = '请先上传文件';
+  }
+
+  updateTotalCount();
+}
+
+// 生成题目
+generateBtn.addEventListener('click', async () => {
+  if (selectedFiles.length === 0) return;
+
+  const config = getConfig();
+  const questionTypes = Object.keys(config.questionTypeCounts);
+
+  if (questionTypes.length === 0 || config.totalCount <= 0) {
+    showError('请至少选择一种题型并设置题量大于 0');
+    return;
+  }
+
+  console.log('🚀 发送请求，questionTypeCounts =', config.questionTypeCounts);
+  console.log('🚀 发送请求，totalCount =', config.totalCount);
+  console.log('🚀 发送请求，fileRatios =', config.fileRatios);
+
+  const formData = new FormData();
+  selectedFiles.forEach((file, index) => {
+    // 同时传递文件和正确编码的文件名
+    formData.append('files', file);
+    formData.append(`fileNames[${index}]`, file.name);
+  });
+
+  // 传递每个题型的自定义题量 - 每个单独append，肯定能收到
+  Object.entries(config.questionTypeCounts).forEach(([type, count]) => {
+    formData.append(`questionCounts[${type}]`, count);
+    console.log(`  ✓ Append questionCounts[${type}] = ${count}`);
+  });
+
+  // 传递文件比例（如果有设置）
+  config.fileRatios.forEach((ratio, index) => {
+    if (ratio !== null) {
+      formData.append(`fileRatios[${index}]`, ratio);
+      console.log(`  ✓ Append fileRatios[${index}] = ${ratio}`);
+    }
+  });
+
+  formData.append('totalCount', config.totalCount);
+  formData.append('difficulty', config.difficulty);
+
+  // 显示加载状态
+  generateBtn.disabled = true;
+  generateText.style.display = 'none';
+  generateLoading.style.display = 'inline';
+  resultSection.style.display = 'none';
+
+  try {
+    const response = await fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || '生成失败');
+    }
+
+    console.log('✓ 收到回复，questions 数量 =', data.questions.length);
+    currentQuestions = data.questions;
+    renderQuestions(data.questions);
+    afterRenderQuestions();
+    resultSection.style.display = 'block';
+
+    // 滚动到结果
+    resultSection.scrollIntoView({ behavior: 'smooth' });
+
+  } catch (error) {
+    showError(error.message);
+  } finally {
+    // 恢复按钮状态
+    generateBtn.disabled = false;
+    generateText.style.display = 'inline';
+    generateLoading.style.display = 'none';
+  }
+});
+
+// 题型名称映射
+const typeNameMap = {
+  single: '单选题',
+  multiple: '多选题',
+  judgment: '判断题',
+  essay: '简答题'
+};
+
+// 清洗选项：如果选项本身已经以 "A. " 开头，去除重复序号
+function cleanOptionText(optText) {
+  if (!optText || typeof optText !== 'string') return optText;
+  
+  let cleaned = optText.trim();
+  
+  // 反复清洗，直到找不到序号前缀为止（处理 "A. A. xxx" → "xxx"）
+  const patterns = [
+    /^[A-Za-z][\.\:\：]\s*/,         // A. / A: / A：
+    /^[A-Za-z]\s+/,                  // A (空格分隔)
+    /^\d[\.\:\：]\s*/,               // 1. / 1: / 1： (有些 AI 会用数字序号)
+    /^①|^②|^③|^④|^⑤/,              // 带圈数字，也去掉
+  ];
+  
+  let changed;
+  do {
+    changed = false;
+    for (const pattern of patterns) {
+      if (pattern.test(cleaned)) {
+        cleaned = cleaned.replace(pattern, '').trim();
+        changed = true;
+        break; // 去掉一层再重新检查
+      }
+    }
+  } while (changed);
+  
+  return cleaned.trim();
+}
+
+// 渲染题目
+function renderQuestions(questions) {
+  questionsList.innerHTML = '';
+
+  questions.forEach((q, index) => {
+    // 客观题末尾加括号供填写答案（仅打印显示），简答题加class留空白
+    const answerParenthesis = ['single', 'multiple', 'judgment'].includes(q.type) 
+      ? `<span class="print-answer-paren">（&nbsp;&nbsp;&nbsp;&nbsp;）</span>` 
+      : '';
+    const isEssay = q.type === 'essay';
+    const itemClass = `question-item ${isEssay ? 'essay-type' : ''}`;
+
+    const item = document.createElement('div');
+    item.className = itemClass;
+
+    const typeName = typeNameMap[q.type] || '';
+    const typeBadge = typeName ? `<span class="type-badge">${typeName}</span>` : '';
+
+    let html = `
+      <div class="question-header">
+        <div class="question-number">${index + 1}</div>
+        <div class="question-text">
+          ${typeBadge}${escapeHtml(q.question)}${answerParenthesis}
+        </div>
+      </div>
+    `;
+
+    // 选项（单选题、多选题）
+    if (q.options && q.options.length > 0) {
+      html += '<div class="options-list">';
+      q.options.forEach((opt, optIndex) => {
+        const isCorrect = Array.isArray(q.answer)
+          ? q.answer.includes(String.fromCharCode(65 + optIndex)) || q.answer.includes(optIndex)
+          : q.answer === String.fromCharCode(65 + optIndex) || q.answer === optIndex;
+
+        const letter = String.fromCharCode(65 + optIndex);
+        const cleanedOpt = cleanOptionText(opt);
+        html += `<div class="option-item ${isCorrect ? 'correct' : ''}">${letter}. ${escapeHtml(cleanedOpt)}</div>`;
+      });
+      html += '</div>';
+    }
+
+    // 答案显示（判断题、简答题）
+    if (q.type === 'judgment') {
+      html += `<div class="answer-display"><span class="answer-label">答案：</span> ${q.answer ? '正确' : '错误'}</div>`;
+    } else if (q.type === 'essay') {
+      html += `<div class="answer-display"><span class="answer-label">参考答案：</span><br>${escapeHtml(q.answer)}</div>`;
+    }
+
+    // 解释
+    if (q.explanation) {
+      html += `<div class="explanation"><span class="explanation-label">解析：</span> ${escapeHtml(q.explanation)}</div>`;
+    }
+
+    item.innerHTML = html;
+    questionsList.appendChild(item);
+  });
+}
+
+// HTML 转义
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// 显示错误
+function showError(message) {
+  errorToast.textContent = message;
+  errorToast.style.display = 'block';
+  setTimeout(() => {
+    errorToast.style.display = 'none';
+  }, 4000);
+}
+
+// 导出 JSON
+exportJsonBtn.addEventListener('click', () => {
+  if (!currentQuestions) return;
+  downloadFile(JSON.stringify({ questions: currentQuestions }, null, 2), 'questions.json', 'application/json');
+});
+
+// 导出 TXT
+exportTxtBtn.addEventListener('click', () => {
+  if (!currentQuestions) return;
+  let text = '';
+  currentQuestions.forEach((q, i) => {
+    text += `${i + 1}. ${q.question}\n`;
+    if (q.options) {
+      q.options.forEach((opt, j) => {
+        text += `   ${String.fromCharCode(65 + j)}. ${opt}\n`;
+      });
+    }
+    let answerText = Array.isArray(q.answer) ? q.answer.join(', ') : q.answer;
+    if (q.type === 'judgment') {
+      answerText = q.answer ? '正确' : '错误';
+    }
+    text += `   答案：${answerText}\n`;
+    if (q.explanation) {
+      text += `   解析：${q.explanation}\n`;
+    }
+    text += '\n';
+  });
+  downloadFile(text, 'questions.txt', 'text/plain');
+});
+
+// 导出 Excel (xlsx) - 每题一行，题目/选项/答案/解析分四列
+exportXlsxBtn.addEventListener('click', () => {
+  if (!currentQuestions || !window.XLSX) {
+    showError('Excel 导出库未加载，请刷新重试');
+    return;
+  }
+
+  // 表头
+  const data = [
+    ['序号', '题型', '题目', '选项', '答案', '解析']
+  ];
+
+  // 题型名称映射
+  const typeNameMap = {
+    single: '单选题',
+    multiple: '多选题',
+    judgment: '判断题',
+    essay: '简答题'
+  };
+
+  // 每道题一行
+  currentQuestions.forEach((q, index) => {
+    let optionsStr = '';
+    if (q.options && q.options.length > 0) {
+      optionsStr = q.options.map(opt => opt).join('；');
+    }
+    // 判断题固定选项
+    if (q.type === 'judgment') {
+      optionsStr = '正确；错误';
+    }
+
+    let answerStr = '';
+    if (Array.isArray(q.answer)) {
+      // 多选题答案直接连写，不用分隔符
+      answerStr = q.answer.join('');
+    } else {
+      if (q.type === 'judgment') {
+        // 判断题正确=A，错误=B
+        answerStr = q.answer ? 'A' : 'B';
+      } else {
+        answerStr = String(q.answer);
+      }
+    }
+
+    const explanation = q.explanation || '';
+
+    data.push([
+      index + 1,
+      typeNameMap[q.type] || q.type,
+      q.question,
+      optionsStr,
+      answerStr,
+      explanation
+    ]);
+  });
+
+  // 创建 workbook 并下载
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '题库');
+  XLSX.writeFile(wb, 'questions.xlsx');
+});
+
+// 下载文件
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 显示/隐藏答案切换
+toggleAnswersBtn.addEventListener('click', () => {
+  answersVisible = !answersVisible;
+  if (answersVisible) {
+    document.body.classList.add('show-answers');
+    toggleAnswersBtn.textContent = '隐藏答案';
+    toggleAnswersBtn.classList.add('showing');
+  } else {
+    document.body.classList.remove('show-answers');
+    toggleAnswersBtn.textContent = '显示答案';
+    toggleAnswersBtn.classList.remove('showing');
+  }
+});
+
+// 打印
+printBtn.addEventListener('click', () => {
+  window.print();
+});
+
+// 生成题目后重新重置为隐藏答案状态
+function afterRenderQuestions() {
+  answersVisible = false;
+  document.body.classList.remove('show-answers');
+  toggleAnswersBtn.textContent = '显示答案';
+  toggleAnswersBtn.classList.remove('showing');
+}
+
+// 在生成完成后调用
+// （已经在生成代码里调用了，这里声明函数）
+
+// 初始化
+updateTotalCount();

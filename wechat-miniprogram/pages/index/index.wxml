@@ -1,0 +1,106 @@
+<view class="container">
+  <!-- 配额警告 -->
+  <view class="quota-warning {{!(isPro || remaining > 0) ? 'show' : ''}}" id="quotaWarning">
+    <h4>⚠️ 免费额度已用完</h4>
+    <p wx:if="{{!isPro}}">未登录游客已用完 5 次免费压缩。开通终身会员即可无限次使用。</p>
+    <button class="btn-upgrade" bindtap="openUpgrade">立即购买 - ¥9.9</button>
+  </view>
+
+  <view class="header">
+    <h1>🗜️ 图片压缩工具</h1>
+    <p>选择图片，指定目标大小，自动压缩满足要求</p>
+  </view>
+
+  <!-- 上传区域 -->
+  <view class="upload-area" bindtap="chooseImage">
+    <view class="upload-icon">🖼️</view>
+    <view class="upload-text">点击选择图片</view>
+    <view class="upload-hint">支持 JPG/PNG/WebP/GIF，可一次性选择多张<br>可同时调整文件大小和分辨率，也可以只调整其中一项</view>
+  </view>
+
+  <input type="file" bindchange="onFileChange" style="display:none" />
+
+  <!-- 设置区域 -->
+  <view class="settings-area {{uploaded ? 'show' : ''}}" id="settingsArea">
+    <h3>🎯 设置目标文件大小</h3>
+
+    <view class="form-group">
+      <label>常用预设：</label>
+      <view class="target-size-options">
+        <view class="size-option {{targetSize == 100 ? 'active' : ''}}" bindtap="selectPreset" data-size="100" data-unit="KB">100 KB</view>
+        <view class="size-option {{targetSize == 200 ? 'active' : ''}}" bindtap="selectPreset" data-size="200" data-unit="KB">200 KB</view>
+        <view class="size-option {{targetSize == 500 ? 'active' : ''}}" bindtap="selectPreset" data-size="500" data-unit="KB">500 KB</div>
+        <view class="size-option {{targetSize == 1024 ? 'active' : ''}}" bindtap="selectPreset" data-size="1" data-unit="MB">1 MB</div>
+      </view>
+
+      <view class="custom-size">
+        <input type="number" placeholder="输入自定义大小" value="{{customSize}}" bindinput="onCustomSizeChange" />
+        <picker bindchange="onCustomUnitChange" value="{{customUnitIndex}}" range="{{sizeUnits}}">
+          <view>{{sizeUnits[customUnitIndex]}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="form-group">
+      <label>目标分辨率（最大宽度）：</label>
+      <view class="resolution-options">
+        <view class="resolution-option {{maxWidth == 1920 ? 'active' : ''}}" bindtap="selectResolution" data-width="1920">1920px</view>
+        <view class="resolution-option {{maxWidth == 1280 ? 'active' : ''}}" bindtap="selectResolution" data-width="1280">1280px</view>
+        <view class="resolution-option {{maxWidth == 800 ? 'active' : ''}}" bindtap="selectResolution" data-width="800">800px</view>
+        <view class="resolution-option {{maxWidth == 0 ? 'active' : ''}}" bindtap="selectResolution" data-width="0">保持原图</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 预览区域 -->
+  <view class="preview-area {{previewed ? 'show' : ''}}" id="previewArea">
+    <view class="preview-row">
+      <view class="preview-card">
+        <h3>原始图片</h3>
+        <image class="preview-image" src="{{originalPreview}}" mode="aspectFit" />
+        <view class="file-info">{{originalInfo}}</view>
+      </view>
+      <view class="preview-card">
+        <h3>压缩后</h3>
+        <image class="preview-image" src="{{compressedPreview}}" mode="aspectFit" />
+        <view class="file-info">{{compressedInfo}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 压缩结果 -->
+  <view class="compression-result {{compressed ? 'show' : ''}}" id="compressionResult">
+    <div class="result-stats">
+      <div class="stat-box">
+        <div class="stat-label">原始大小</div>
+        <div class="stat-value">{{originalSize}} KB</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">压缩后</div>
+        <div class="stat-value success">{{compressedSize}} KB</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">减少了</div>
+        <div class="stat-value success">{{reduced}}%</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">剩余次数</div>
+        <div class="stat-value {{remaining <= 5 ? 'low' : ''}}">{{isPro ? '∞' : remaining}}</div>
+      </div>
+    </div>
+  </view>
+
+  <!-- 按钮区域 -->
+  <view class="btn-area">
+    <button class="btn btn-primary {{compressed}}" disabled="{{!uploaded}}" bindtap="startCompression">开始压缩</button>
+    <button class="btn btn-download btn-download {{compressed ? 'show' : ''}}" bindtap="downloadResult">下载压缩结果</button>
+  </view>
+
+  <!-- 进度条 -->
+  <view class="progress-area {{processing ? 'show' : ''}}" id="progressArea">
+    <div class="progress-bar">
+      <div class="progress-fill" style="width:{{progress}}%"></div>
+    </div>
+    <div class="progress-text">{{progressText}}</div>
+  </view>
+</view>

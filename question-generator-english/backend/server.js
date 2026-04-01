@@ -1,0 +1,920 @@
+const express = require('express');
+const cors = require('cors');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const sqlite3 = require('sqlite3').verbose();
+const { parseFile } = require('./utils/fileParser');
+const { generateQuestions } = require('./utils/aiGenerator');
+
+// 加载环境变量
+require('dotenv').config();
+
+// 初始化 SQLite 数据库
+const dbPath = path.join(__dirname, 'exam_results.db');
+const db = new sqlite3.Database(dbPath);
+
+// 创建表（如果不存在）
+db.run(`
+  CREATE TABLE IF NOT EXISTS exam_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    exam_id TEXT NOT NULL,
+    unit TEXT NOT NULL,
+    name TEXT NOT NULL,
+    score INTEGER NOT NULL,
+    total INTEGER NOT NULL,
+    percentage INTEGER NOT NULL,
+    submitted_at TEXT NOT NULL,
+    details TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+console.log('📁 SQLite database initialized at:', dbPath);
+
+const app = express();
+const PORT = 9000;
+const AI_PROVIDER = process.env.AI_PROVIDER || 'openai';
+const AI_API_KEY = process.env.AI_API_KEY || '';
+const MODEL = process.env.AI_MODEL || 'gpt-3.5-turbo';
+
+// 中间件
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '../frontend')));
+
+// 文件上传配置
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB 限制
+  },
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'text/csv',
+      'text/plain',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/bmp',
+      'image/x-windows-bmp'
+    ];
+    const allowedExts = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    console.log(`File check: name=${file.originalname}, ext=${ext}, mime=${file.mimetype}`);
+    
+    // 扩展名或mime类型有一个匹配就通过
+    const extOk = allowedExts.includes(ext);
+    const mimeOk = allowedTypes.includes(file.mimetype);
+    
+    if (extOk || mimeOk) {
+      console.log(`✓ File accepted: extOk=${extOk}, mimeOk=${mimeOk}`);
+      cb(null, true);
+    } else {
+      console.log(`✗ File rejected: extOk=${extOk}, mimeOk=${mimeOk}`);
+      cb(new Error('不支持的文件类型。支持 PDF, Word, Excel, TXT, JPG, PNG, GIF 等'));
+    }
+  }
+});
+
+// API 路由
+app.post('/api/upload', upload.array('files', 10), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: '没有上传文件' });
+    }
+
+    console.log('=== Received request ===');
+    console.log('Files:', req.files.length);
+
+    // 解析自定义题型题量 - 兼容两种格式
+    let questionTypeCounts = {};
+    let targetCount = 0;
+    let difficulty = req.body.difficulty;
+    let fileRatios = [];
+
+    // 情况1：multer 自动解析成 questionCounts 对象
+    if (req.body.questionCounts && typeof req.body.questionCounts === 'object') {
+      Object.entries(req.body.questionCounts).forEach(([type, count]) => {
+        count = parseInt(count);
+        if (count > 0) {
+          questionTypeCounts[type] = count;
+          targetCount += count;
+          console.log(`  -> Parsed from object ${type}: ${count}`);
+        }
+      });
+    }
+
+    // 情况2：每个题型单独一个键 questionCounts[type]
+    ['single', 'multiple', 'judgment', 'essay'].forEach(type => {
+      const key = `questionCounts[${type}]`;
+      if (req.body[key] !== undefined && req.body[key] !== '') {
+        const count = parseInt(req.body[key]);
+        if (count > 0 && !questionTypeCounts[type]) {
+          questionTypeCounts[type] = count;
+          targetCount += count;
+          console.log(`  -> Parsed from key ${type}: ${count}`);
+        }
+      }
+    });
+
+    // 解析文件比例 - 兼容两种格式
+    for (let i = 0; i < req.files.length; i++) {
+      // 情况1：multer 自动解析成对象
+      if (req.body.fileRatios && typeof req.body.fileRatios === 'object' && req.body.fileRatios[i] !== undefined) {
+        const val = parseFloat(req.body.fileRatios[i]);
+        if (!isNaN(val) && val > 0) {
+          fileRatios[i] = val;
+          console.log(`  -> File ratio from object[${i}]: ${val}`);
+        } else {
+          fileRatios[i] = null;
+        }
+      } else {
+        // 情况2：单独键
+        const key = `fileRatios[${i}]`;
+        if (req.body[key] !== undefined && req.body[key] !== '') {
+          const val = parseFloat(req.body[key]);
+          if (!isNaN(val) && val > 0) {
+            fileRatios[i] = val;
+            console.log(`  -> File ratio from key[${i}]: ${val}`);
+          } else {
+            fileRatios[i] = null;
+          }
+        }
+      }
+    }
+
+    // 如果还是没有题量，检查 totalCount
+    if (targetCount === 0 && req.body.totalCount !== undefined) {
+      targetCount = parseInt(req.body.totalCount);
+    }
+
+    // 如果题型还是空，但是有题量，默认全部分配给单选题
+    if (Object.keys(questionTypeCounts).length === 0 && targetCount > 0) {
+      questionTypeCounts = { single: targetCount };
+    }
+
+    // 如果还是没有题量，默认 10 题单选题
+    if (targetCount === 0) {
+      questionTypeCounts = { single: 10 };
+      targetCount = 10;
+    }
+
+    console.log('=== Parsed result ===');
+    console.log('questionTypeCounts:', questionTypeCounts);
+    console.log('targetCount:', targetCount);
+
+    // 解析所有文件，文本文件提取文字，图片转base64给多模态AI
+    const fileContents = [];
+    let totalTextLength = 0;
+    let hasImages = false;
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      // 使用前端传递的正确编码文件名，兼容两种格式
+      let originalName;
+      if (req.body.fileNames && typeof req.body.fileNames === 'object' && req.body.fileNames[i] !== undefined) {
+        originalName = req.body.fileNames[i];
+      } else {
+        originalName = req.body[`fileNames[${i}]`] || file.originalname;
+      }
+      const ext = path.extname(originalName).toLowerCase();
+      const isImage = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'].includes(ext);
+      
+      if (isImage) {
+        // 图片转base64，不提取文字，直接交给AI多模态读取
+        const buffer = fs.readFileSync(file.path);
+        const base64 = buffer.toString('base64');
+        const mimeType = file.mimetype || 'image/jpeg';
+        fileContents.push({
+          name: originalName,
+          type: 'image',
+          mimeType,
+          base64,
+          length: 0
+        });
+        hasImages = true;
+        console.log(`  -> 图片: ${originalName}, size ${buffer.length} bytes`);
+      } else {
+        // 普通文档提取文字
+        const text = await parseFile(file.path, file.mimetype);
+        if (text && text.trim().length > 0) {
+          fileContents.push({
+            name: originalName,
+            type: 'text',
+            text: text.trim(),
+            length: text.trim().length
+          });
+          totalTextLength += text.trim().length;
+        }
+      }
+      // 清理临时文件
+      fs.unlinkSync(file.path);
+    }
+
+    // 检查是否有可用内容
+    if (fileContents.length === 0 || (totalTextLength < 50 && !hasImages)) {
+      return res.status(400).json({ error: '所有文件内容过少，无法生成题目' });
+    }
+
+    let allQuestions = [];
+    let questionId = 1;
+
+    // ========== 分配题目给各个文件 ==========
+    const numFiles = fileContents.length;
+    let fileAssignments;
+
+    if (numFiles === 1) {
+      // 单文件直接分配
+      fileAssignments = [{ ...fileContents[0], assignedCount: targetCount }];
+    } else {
+      // 多文件：检查是否有用户自定义比例
+      const hasUserRatio = fileRatios.some(r => r !== null);
+      fileAssignments = fileContents.map((file, index) => {
+        return { ...file, assignedCount: 0 };
+      });
+
+      if (hasUserRatio) {
+        // 用户自定义比例分配
+        console.log(`使用用户自定义出题比例:`, fileRatios);
+        // 计算总比例（用户没填的按长度比例，图片length=0不占比例，只按文本分）
+        let totalRatio = 0;
+        const actualRatios = [];
+        fileRatios.forEach((ratio, index) => {
+          if (ratio === null) {
+            ratio = fileContents[index].type === 'text' ? fileContents[index].length : 1;
+          }
+          actualRatios[index] = ratio;
+          totalRatio += ratio;
+        });
+
+        // 直接按比例计算，再调整保证每个至少一题，总和正好
+        const rawAssignments = actualRatios.map(ratio => Math.round((ratio / totalRatio) * targetCount));
+        let assignedTotal = rawAssignments.reduce((sum, val) => sum + val, 0);
+
+        // 构建分配，保证每个至少一题
+        let remainingCount = targetCount;
+        fileAssignments = fileContents.map((file, index) => {
+          let count = Math.max(1, rawAssignments[index]);
+          remainingCount -= count;
+          return { ...file, assignedCount: count };
+        });
+
+        // 如果还有剩余，全部加到比例最大的文件
+        if (remainingCount > 0) {
+          let maxIndex = 0;
+          let maxRatio = 0;
+          actualRatios.forEach((ratio, i) => {
+            if (ratio > maxRatio) {
+              maxRatio = ratio;
+              maxIndex = i;
+            }
+          });
+          fileAssignments[maxIndex].assignedCount += remainingCount;
+        } else if (remainingCount < 0) {
+          // 如果超了，从比例最小的开始减，保证每个至少一题
+          let remaining = -remainingCount;
+          const sorted = fileAssignments.map((a, i) => ({ index: i, ratio: actualRatios[i], count: a.assignedCount }))
+            .sort((a, b) => a.count - b.count);
+          for (let i = 0; i < sorted.length && remaining > 0; i++) {
+            if (sorted[i].count > 1) {
+              const reduce = Math.min(remaining, sorted[i].count - 1);
+              fileAssignments[sorted[i].index].assignedCount -= reduce;
+              remaining -= reduce;
+            }
+          }
+        }
+      } else {
+        // 自动分配：按长度比例，每个文件至少一题
+        // 第一步：每个文件先分配 1 题
+        let remainingCount = targetCount - numFiles;
+        fileAssignments = fileContents.map(file => {
+          return { ...file, assignedCount: 1 };
+        });
+
+        // 第二步：剩余题目按比例分配
+        if (remainingCount > 0) {
+          // 按长度权重分配剩余题目
+          let assignedRemaining = 0;
+          for (let i = 0; i < fileAssignments.length; i++) {
+            const file = fileAssignments[i];
+            if (i === fileAssignments.length - 1) {
+              // 最后一个文件分配所有剩余
+              file.assignedCount += remainingCount - assignedRemaining;
+              assignedRemaining = remainingCount;
+            } else {
+              // 按比例计算
+              let extra = Math.round((file.length / totalTextLength) * remainingCount);
+              extra = Math.min(extra, remainingCount - assignedRemaining);
+              file.assignedCount += extra;
+              assignedRemaining += extra;
+            }
+          }
+
+          // 如果还有剩余（因为取整），全部分配给内容最长的文件
+          // 图片 length 是 0，所以肯定选文本文件，没问题
+          const remainingAfter = remainingCount - assignedRemaining;
+          if (remainingAfter > 0) {
+            const longestIndex = fileAssignments.reduce((iMax, file, i, arr) =>
+              file.length > arr[iMax].length ? i : iMax, 0
+            );
+            fileAssignments[longestIndex].assignedCount += remainingAfter;
+          }
+        }
+      }
+    }
+
+    // 输出分配日志
+    console.log('=== 文件分配计划 ===');
+    fileAssignments.forEach((a, i) => {
+      console.log(`  文件 ${i+1} "${a.name}": 类型 ${a.type}, 长度 ${a.length}, 分配题目 ${a.assignedCount} 道`);
+    });
+
+    // ========== 核心保证：每种题型总数量严格准确 ==========
+    // 记录还需要生成多少题每种题型
+    const remainingRequired = { ...questionTypeCounts };
+    let totalRemaining = targetCount;
+
+    console.log('=== 初始题型配额 ===', remainingRequired);
+
+    // 按文件分配，逐个生成，保证配额不超
+    for (const assignment of fileAssignments) {
+      const fileAssignedCount = assignment.assignedCount;
+
+      if (fileAssignedCount <= 0 || totalRemaining <= 0) continue;
+
+      // 限制单个文件最大长度，只有文本需要截断
+      let trimmedText = '';
+      if (assignment.type === 'text' && assignment.text) {
+        const maxLength = 12000;
+        trimmedText = assignment.text.length > maxLength ? assignment.text.slice(0, maxLength) : assignment.text;
+      }
+
+      console.log(`正在从 "${assignment.name}" 生成，总配额还剩:`, remainingRequired);
+
+      // 🔥 极简策略，彻底杜绝错误：单文件模式直接拿走所有剩余配额
+      // 多文件按文件分配计划分完后，这里自然也只会拿到剩余部分
+      // 不玩复杂比例分配，绝对不会算错
+      const fileQuestionCounts = {};
+      Object.entries(remainingRequired).forEach(([type, remaining]) => {
+        if (remaining > 0 && fileAssignedCount > 0) {
+          // 如果这是第一个文件，本文件分配数够就全拿走，不够拿能拿的
+          const take = Math.min(remaining, fileAssignedCount - (Object.values(fileQuestionCounts).reduce((s, c) => s + c, 0)));
+          if (take > 0) {
+            fileQuestionCounts[type] = take;
+          }
+        }
+      });
+
+      // 减去这次分配，更新剩余
+      Object.entries(fileQuestionCounts).forEach(([type, count]) => {
+        remainingRequired[type] -= count;
+        totalRemaining -= count;
+      });
+
+      console.log(`  本文件分配:`, fileQuestionCounts);
+
+      // 对每种题型分别生成题目，**并发生成**提速
+      // 题型顺序：single -> multiple -> judgment -> essay
+      const sortedTypes = ['single', 'multiple', 'judgment', 'essay'];
+      const generatePromises = [];
+
+      sortedTypes.forEach(type => {
+        const count = fileQuestionCounts[type];
+        if (!count || count <= 0) return;
+
+        console.log(`  - 生成 ${type} ${count} 题...`);
+        // 构造当前文件的内容数组，支持文本和图片
+        const currentFileContents = [{
+          ...(assignment.type === 'image' 
+            ? { type: 'image', base64: assignment.base64, mimeType: assignment.mimeType, length: 0 }
+            : { type: 'text', text: trimmedText, length: trimmedText.length }),
+          name: assignment.name
+        }];
+
+        // 并发生成提速，不用逐个等
+        const promise = (async () => {
+          const result = await generateQuestions(currentFileContents, {
+            questionTypes: [type],
+            count: count,
+            difficulty: difficulty || 'medium'
+          });
+          let questions = result.questions || result;
+          let generatedCount = 0;
+
+          if (Array.isArray(questions) && questions.length > 0) {
+            // 如果生成的题目超过要求，截断只保留需要的数量
+            if (questions.length > count) {
+              questions = questions.slice(0, count);
+            }
+            generatedCount = questions.length;
+            questions.forEach(q => {
+              q.id = questionId++;
+              q.sourceFile = assignment.name;
+            });
+            allQuestions = allQuestions.concat(questions);
+            // 更新剩余配额
+            remainingRequired[type] += (count - generatedCount);
+            totalRemaining += (count - generatedCount);
+            console.log(`    ✓ 成功生成 ${generatedCount} 道 ${type}`);
+          } else {
+            // 没生成出题目，全部退回待补
+            remainingRequired[type] += count;
+            totalRemaining += count;
+            console.log(`    ✗ ${type} 没有生成出题目，全部退回待补`);
+          }
+        })();
+
+        generatePromises.push(promise);
+      });
+
+      // 等待所有并发生成完成
+      await Promise.all(generatePromises);
+    }
+
+    // 补生成：如果还有题型没达到目标数量，从最长文件补生成
+    let stillNeedTotal = Object.values(remainingRequired).reduce((sum, val) => sum + (val > 0 ? val : 0), 0);
+    if (stillNeedTotal > 0) {
+      console.log(`=== 需要补生成，总共 ${stillNeedTotal} 题 ===`);
+      console.log('剩余配额:', remainingRequired);
+
+      // 找内容最长的**文本**文件补生成，如果全是图片就用第一个图片
+      const textFiles = fileAssignments.filter(f => f.type === 'text');
+      let largestFile;
+      if (textFiles.length > 0) {
+        largestFile = textFiles.sort((a, b) => b.length - a.length)[0];
+      } else {
+        largestFile = fileAssignments.sort((a, b) => b.length - a.length)[0];
+      }
+      const maxLength = 12000;
+      let trimmedText = '';
+      if (largestFile.type === 'text' && largestFile.text) {
+        trimmedText = largestFile.text.length > maxLength 
+          ? largestFile.text.slice(0, maxLength) 
+          : largestFile.text;
+      }
+
+      // 按题型逐个补生成，严格只补需要的数量
+      for (const [type, remaining] of Object.entries(remainingRequired)) {
+        if (remaining <= 0) continue;
+
+        console.log(`补生成 ${type} ${remaining} 题...`);
+        try {
+          // 构造当前文件的内容数组，支持文本和图片
+          const currentFileContents = [{
+            type: 'text',
+            text: trimmedText,
+            name: largestFile.name
+          }];
+          const result = await generateQuestions(currentFileContents, {
+            questionTypes: [type],
+            count: remaining,
+            difficulty: difficulty || 'medium'
+          });
+          let questions = result.questions || result;
+          if (Array.isArray(questions) && questions.length > 0) {
+            // 🚨 严格截断：只补需要的数量，绝对不多补
+            if (questions.length > remaining) {
+              questions = questions.slice(0, remaining);
+              console.log(`    ⚠️  生成了 ${questions.length}，截断到需要的 ${remaining}`);
+            }
+            questions.forEach(q => {
+              q.id = questionId++;
+              q.sourceFile = largestFile.name;
+            });
+            allQuestions = allQuestions.concat(questions);
+            console.log(`✓ 补生成 ${questions.length} 道 ${type}`);
+          } else {
+            console.log(`    ✗ 没有生成出题目`);
+          }
+        } catch (err) {
+          console.error(`✗ 补生成 ${type} 失败:`, err.message);
+        }
+      }
+    }
+
+    console.log(`=== 生成完成（裁剪前），总共 ${allQuestions.length} 道题目 ===`);
+
+    console.log(`=== 生成完成，总共 ${allQuestions.length} 道题目 ===`);
+
+    // 先按题型分类排序
+    const groupedQuestions = {
+      single: allQuestions.filter(q => q.type === 'single'),
+      multiple: allQuestions.filter(q => q.type === 'multiple'),
+      judgment: allQuestions.filter(q => q.type === 'judgment'),
+      essay: allQuestions.filter(q => q.type === 'essay'),
+    };
+
+    // ========== 最终严格保证：按照用户要求的题型数量精确裁剪 ==========
+    // 原则：少生成不补（AI 生成不出来没办法），多生成一定砍掉
+    // 👉 无论前面生成过程如何，最后这一刀绝对保证数量准确，多了一定砍
+    const finalQuestions = [];
+    const finalStats = [];
+    
+    ['single', 'multiple', 'judgment', 'essay'].forEach(type => {
+      const target = questionTypeCounts[type] || 0;
+      const questionsOfType = groupedQuestions[type] || [];
+      const actual = questionsOfType.length;
+      
+      if (target <= 0) {
+        finalStats.push(`${type}: target=${target}, actual=${actual} → ❌ 全部舍弃`);
+        return; // 用户没要求这个题型，绝对全部丢掉，一个不留
+      }
+      
+      if (actual > target) {
+        // 🚨 铁腕政策：生成多了，必须截断到目标数量，一个不多留
+        const trimmed = questionsOfType.slice(0, target);
+        finalQuestions.push(...trimmed);
+        finalStats.push(`${type}: target=${target}, actual=${actual} → ✂️ 截断到 ${target}`);
+      } else {
+        // 生成少了，全部保留，AI生成不出来我们也没办法，至少不会多
+        finalQuestions.push(...questionsOfType);
+        finalStats.push(`${type}: target=${target}, actual=${actual} → ✓ 全部保留（缺 ${target - actual}）`);
+      }
+    });
+
+    // 使用裁剪后的最终题目
+    console.log('=== 最终数量调整 ===');
+    finalStats.forEach(line => console.log('  ' + line));
+
+    // 重新编号
+    finalQuestions.forEach((q, index) => {
+      q.id = index + 1;
+    });
+
+    // 最终检查：计算最终实际数量
+    const finalCounts = {};
+    finalQuestions.forEach(q => {
+      finalCounts[q.type] = (finalCounts[q.type] || 0) + 1;
+    });
+    console.log('=== 最终题型统计（输出给前端）===', finalCounts);
+
+    // 检查是否生成了题目
+    if (finalQuestions.length === 0) {
+      return res.status(500).json({ error: '所有文件都未能成功生成题目，请重试' });
+    }
+
+    res.json({
+      success: true,
+      textLength: totalTextLength,
+      fileCount: fileContents.length,
+      questions: finalQuestions
+    });
+
+  } catch (error) {
+    console.error('生成题目错误:', error);
+    // 清理文件
+    if (req.files) {
+      req.files.forEach(file => {
+        if (file.path && fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+      });
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 短链接存储 - 服务器内存存储，重启丢失（满足临时考试需求）
+const examStore = new Map();
+
+// 生成短 ID
+function generateShortId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
+
+// 创建短链接
+app.post('/api/create-shortlink', express.json(), (req, res) => {
+  try {
+    const { questions } = req.body;
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ error: '题目数据为空' });
+    }
+
+    const id = generateShortId();
+    examStore.set(id, questions);
+    console.log(`Created shortlink: ${id}, questions: ${questions.length}`);
+
+    res.json({
+      success: true,
+      id: id,
+      url: `${req.protocol}://${req.get('host')}${req.baseUrl}/#exam/${id}`
+    });
+  } catch (error) {
+    console.error('Create shortlink error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 获取短链接题目
+app.get('/api/exam/:id', (req, res) => {
+  const id = req.params.id;
+  if (!examStore.has(id)) {
+    return res.status(404).json({ error: '考试不存在或已过期' });
+  }
+  const questions = examStore.get(id);
+  res.json({
+    success: true,
+    questions: questions
+  });
+});
+
+// 提交考试成绩
+app.post('/api/submit-result', express.json(), (req, res) => {
+  try {
+    const { examId, unit, name, score, total, submittedAt, details } = req.body;
+    
+    if (!examId || !unit || !name) {
+      return res.status(400).json({ success: false, error: '缺少必要信息' });
+    }
+    
+    const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
+    const detailsJson = JSON.stringify(details || []);
+    
+    // 插入到 SQLite 数据库
+    db.run(
+      `INSERT INTO exam_results (exam_id, unit, name, score, total, percentage, submitted_at, details)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [examId, unit, name, score, total, percentage, submittedAt, detailsJson],
+      function(err) {
+        if (err) {
+          console.error('Insert result error:', err);
+          return res.status(500).json({ success: false, error: err.message });
+        }
+        
+        console.log(`Received result: exam=${examId}, unit=${unit}, name=${name}, score=${score}/${total}, id=${this.lastID}`);
+        
+        res.json({
+          success: true,
+          message: '成绩提交成功',
+          resultId: this.lastID
+        });
+      }
+    );
+  } catch (error) {
+    console.error('Submit result error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 获取考试成绩列表页面
+app.get('/results/:examId', (req, res) => {
+  const examId = req.params.examId;
+  
+  // 从数据库查询该考试所有成绩，按分数降序排序
+  db.all(
+    `SELECT * FROM exam_results WHERE exam_id = ? ORDER BY score DESC`,
+    [examId],
+    (err, results) => {
+      if (err) {
+        console.error('Query results error:', err);
+        return res.status(500).send('查询成绩失败');
+      }
+      
+      const html = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>考试成绩列表 - ${examId}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    @media (max-width: 600px) {
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    .stat-card {
+      background: #f0f4ff;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #667eea;
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead {
+      background: #f0f4ff;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      font-weight: 600;
+      color: #333;
+    }
+    tr:hover {
+      background: #f8f9ff;
+    }
+    .rank-first {
+      background: #fff3cd;
+      font-weight: bold;
+    }
+    .rank-second {
+      background: #f8f9fa;
+      font-weight: bold;
+    }
+    .rank-third {
+      background: #f5e9d7;
+      font-weight: bold;
+    }
+    .score-percentage {
+      font-weight: bold;
+    }
+    .score-high {
+      color: #2ecc71;
+    }
+    .score-medium {
+      color: #f39c12;
+    }
+    .score-low {
+      color: #e74c3c;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+    .back-link {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .back-link a {
+      color: #667eea;
+      text-decoration: none;
+    }
+    .time {
+      font-size: 0.85rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 考试成绩排行榜</h1>
+    <p class="subtitle">考试 ID: ${examId}</p>
+    
+    ${results.length > 0 ? `
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value">${results.length}</div>
+          <div class="stat-label">参与人数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${Math.round(results.reduce((sum, r) => sum + r.percentage, 0) / results.length)}%</div>
+          <div class="stat-label">平均分</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${results[0].score}/${results[0].total}</div>
+          <div class="stat-label">最高分</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${results[results.length - 1].score}/${results[results.length - 1].total}</div>
+          <div class="stat-label">最低分</div>
+        </div>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>排名</th>
+            <th>单位</th>
+            <th>姓名</th>
+            <th>分数</th>
+            <th>正确率</th>
+            <th>交卷时间</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${results.map((r, index) => {
+            const rankClass = index === 0 ? 'rank-first' : index === 1 ? 'rank-second' : index === 2 ? 'rank-third' : '';
+            let scoreClass = 'score-high';
+            if (r.percentage < 60) scoreClass = 'score-low';
+            else if (r.percentage < 80) scoreClass = 'score-medium';
+            const date = new Date(r.submitted_at).toLocaleString('zh-CN');
+            return `
+            <tr class="${rankClass}">
+              <td>${index + 1}</td>
+              <td>${r.unit}</td>
+              <td>${r.name}</td>
+              <td><strong>${r.score} / ${r.total}</strong></td>
+              <td><span class="score-percentage ${scoreClass}">${r.percentage}%</span></td>
+              <td><span class="time">${date}</span></td>
+            </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    ` : `
+      <div class="empty-state">
+        <h3>暂无成绩记录</h3>
+        <p>还没有人完成这个考试，请分享考试链接让大家答题吧！</p>
+      </div>
+    `}
+    
+    <div class="back-link">
+      <a href="/">← 返回主页</a>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+      
+      res.send(html);
+    }
+  );
+});
+
+// 健康检查
+app.get('/api/health', (req, res) => {
+  // 统计数据库中的成绩数量
+  db.get(`SELECT COUNT(*) as count FROM exam_results`, (err, row) => {
+    if (err) {
+      return res.json({ status: 'ok', message: 'Question Generator API is running', shortlinks: examStore.size, results: 0, db: 'error' });
+    }
+    res.json({ status: 'ok', message: 'Question Generator API is running', shortlinks: examStore.size, results: row.count, db: 'sqlite' });
+  });
+});
+
+// 启动服务器
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
+  console.log(`📝 Configure AI settings via environment variables:`);
+  console.log(`   AI_PROVIDER: ${AI_PROVIDER}`);
+  console.log(`   AI_MODEL: ${MODEL}`);
+  console.log(`   AI_API_KEY: ${AI_API_KEY ? '***configured***' : 'not set'}`);
+  console.log(`🔗 Shortlink storage enabled: stored ${examStore.size} exams`);
+});

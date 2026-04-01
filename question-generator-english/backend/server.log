@@ -1,0 +1,333 @@
+📁 SQLite database initialized at: /root/.openclaw/workspace/question-generator-english/backend/exam_results.db
+🚀 Server running on http://0.0.0.0:9000
+📝 Configure AI settings via environment variables:
+   AI_PROVIDER: tongyi
+   AI_MODEL: qwen-plus
+   AI_API_KEY: ***configured***
+🔗 Shortlink storage enabled: stored 0 exams
+File check: name=æåèªTSG 07-2019 ç¹ç§è®¾å¤çäº§ååè£åä½è®¸å¯è§å-ä¿®æ¹çï¼å«1ã2å·ä¿®æ¹ååå®¹ï¼-å¸¦ç®å½.pdf, ext=.pdf, mime=application/pdf
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 2
+  -> Parsed from object multiple: 3
+=== Parsed result ===
+questionTypeCounts: { single: 2, multiple: 3 }
+targetCount: 5
+=== 文件分配计划 ===
+  文件 1 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf": 类型 text, 长度 10560, 分配题目 5 道
+=== 初始题型配额 === { single: 2, multiple: 3 }
+正在从 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf" 生成，总配额还剩: { single: 2, multiple: 3 }
+  本文件分配: { single: 2, multiple: 3 }
+  - 生成 single 2 题...
+  - 生成 multiple 3 题...
+    ✓ 成功生成 2 道 single
+    ✓ 成功生成 3 道 multiple
+=== 生成完成（裁剪前），总共 5 道题目 ===
+=== 生成完成，总共 5 道题目 ===
+=== 最终数量调整 ===
+  single: target=2, actual=2 → ✓ 全部保留（缺 0）
+  multiple: target=3, actual=3 → ✓ 全部保留（缺 0）
+  judgment: target=0, actual=0 → ❌ 全部舍弃
+  essay: target=0, actual=0 → ❌ 全部舍弃
+=== 最终题型统计（输出给前端）=== { single: 2, multiple: 3 }
+File check: name=æåèªTSG 07-2019 ç¹ç§è®¾å¤çäº§ååè£åä½è®¸å¯è§å-ä¿®æ¹çï¼å«1ã2å·ä¿®æ¹ååå®¹ï¼-å¸¦ç®å½.pdf, ext=.pdf, mime=application/pdf
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 2
+  -> Parsed from object multiple: 2
+=== Parsed result ===
+questionTypeCounts: { single: 2, multiple: 2 }
+targetCount: 4
+=== 文件分配计划 ===
+  文件 1 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf": 类型 text, 长度 10560, 分配题目 4 道
+=== 初始题型配额 === { single: 2, multiple: 2 }
+正在从 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf" 生成，总配额还剩: { single: 2, multiple: 2 }
+  本文件分配: { single: 2, multiple: 2 }
+  - 生成 single 2 题...
+  - 生成 multiple 2 题...
+    ✓ 成功生成 2 道 single
+    ✓ 成功生成 2 道 multiple
+=== 生成完成（裁剪前），总共 4 道题目 ===
+=== 生成完成，总共 4 道题目 ===
+=== 最终数量调整 ===
+  single: target=2, actual=2 → ✓ 全部保留（缺 0）
+  multiple: target=2, actual=2 → ✓ 全部保留（缺 0）
+  judgment: target=0, actual=0 → ❌ 全部舍弃
+  essay: target=0, actual=0 → ❌ 全部舍弃
+=== 最终题型统计（输出给前端）=== { single: 2, multiple: 2 }
+Created shortlink: 6BssO3, questions: 4
+File check: name=IMG_20260329_114537.jpg, ext=.jpg, mime=image/jpeg
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 1
+  -> Parsed from object multiple: 1
+=== Parsed result ===
+questionTypeCounts: { single: 1, multiple: 1 }
+targetCount: 2
+  -> 图片: IMG_20260329_114537.jpg, size 3209685 bytes
+=== 文件分配计划 ===
+  文件 1 "IMG_20260329_114537.jpg": 类型 image, 长度 0, 分配题目 2 道
+=== 初始题型配额 === { single: 1, multiple: 1 }
+正在从 "IMG_20260329_114537.jpg" 生成，总配额还剩: { single: 1, multiple: 1 }
+  本文件分配: { single: 1, multiple: 1 }
+  - 生成 single 1 题...
+⚠️  当前模型 qwen-plus 不是多模态模型，自动切换到 qwen-vl-plus
+  - 生成 multiple 1 题...
+⚠️  当前模型 qwen-plus 不是多模态模型，自动切换到 qwen-vl-plus
+File check: name=IMG_20260329_114537.jpg, ext=.jpg, mime=image/jpeg
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 1
+  -> Parsed from object multiple: 1
+=== Parsed result ===
+questionTypeCounts: { single: 1, multiple: 1 }
+targetCount: 2
+  -> 图片: IMG_20260329_114537.jpg, size 3209685 bytes
+=== 文件分配计划 ===
+  文件 1 "IMG_20260329_114537.jpg": 类型 image, 长度 0, 分配题目 2 道
+=== 初始题型配额 === { single: 1, multiple: 1 }
+正在从 "IMG_20260329_114537.jpg" 生成，总配额还剩: { single: 1, multiple: 1 }
+  本文件分配: { single: 1, multiple: 1 }
+  - 生成 single 1 题...
+⚠️  当前模型 qwen-plus 不是多模态模型，自动切换到 qwen-vl-plus
+  - 生成 multiple 1 题...
+⚠️  当前模型 qwen-plus 不是多模态模型，自动切换到 qwen-vl-plus
+✓ 多模态API响应成功
+✓ AI返回长度: 369
+    ✓ 成功生成 1 道 single
+File check: name=IMG_20260329_114537.jpg, ext=.jpg, mime=image/jpeg
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 1
+  -> Parsed from object multiple: 1
+=== Parsed result ===
+questionTypeCounts: { single: 1, multiple: 1 }
+targetCount: 2
+  -> 图片: IMG_20260329_114537.jpg, size 3209685 bytes
+=== 文件分配计划 ===
+  文件 1 "IMG_20260329_114537.jpg": 类型 image, 长度 0, 分配题目 2 道
+=== 初始题型配额 === { single: 1, multiple: 1 }
+正在从 "IMG_20260329_114537.jpg" 生成，总配额还剩: { single: 1, multiple: 1 }
+  本文件分配: { single: 1, multiple: 1 }
+  - 生成 single 1 题...
+⚠️  当前模型 qwen-plus 不是多模态模型，自动切换到 qwen-vl-plus
+  - 生成 multiple 1 题...
+⚠️  当前模型 qwen-plus 不是多模态模型，自动切换到 qwen-vl-plus
+File check: name=IMG_20260329_114537.jpg, ext=.jpg, mime=image/jpeg
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 1
+  -> Parsed from object multiple: 1
+=== Parsed result ===
+questionTypeCounts: { single: 1, multiple: 1 }
+targetCount: 2
+  -> 图片: IMG_20260329_114537.jpg, size 3209685 bytes
+=== 文件分配计划 ===
+  文件 1 "IMG_20260329_114537.jpg": 类型 image, 长度 0, 分配题目 2 道
+=== 初始题型配额 === { single: 1, multiple: 1 }
+正在从 "IMG_20260329_114537.jpg" 生成，总配额还剩: { single: 1, multiple: 1 }
+  本文件分配: { single: 1, multiple: 1 }
+  - 生成 single 1 题...
+⚠️  当前模型 qwen-plus 不是多模态模型，自动切换到 qwen-vl-plus
+  - 生成 multiple 1 题...
+⚠️  当前模型 qwen-plus 不是多模态模型，自动切换到 qwen-vl-plus
+✓ 多模态API响应成功
+✓ AI返回长度: 546
+    ✓ 成功生成 1 道 multiple
+=== 生成完成（裁剪前），总共 2 道题目 ===
+=== 生成完成，总共 2 道题目 ===
+=== 最终数量调整 ===
+  single: target=1, actual=1 → ✓ 全部保留（缺 0）
+  multiple: target=1, actual=1 → ✓ 全部保留（缺 0）
+  judgment: target=0, actual=0 → ❌ 全部舍弃
+  essay: target=0, actual=0 → ❌ 全部舍弃
+=== 最终题型统计（输出给前端）=== { single: 1, multiple: 1 }
+File check: name=åç¹RQDJ15202305947 (1).pdf, ext=.pdf, mime=application/pdf
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 1
+  -> Parsed from object multiple: 1
+=== Parsed result ===
+questionTypeCounts: { single: 1, multiple: 1 }
+targetCount: 2
+✓ 多模态API响应成功
+✓ AI返回长度: 688
+    ✓ 成功生成 1 道 multiple
+✓ 多模态API响应成功
+✓ AI返回长度: 369
+    ✓ 成功生成 1 道 single
+=== 生成完成（裁剪前），总共 2 道题目 ===
+=== 生成完成，总共 2 道题目 ===
+=== 最终数量调整 ===
+  single: target=1, actual=1 → ✓ 全部保留（缺 0）
+  multiple: target=1, actual=1 → ✓ 全部保留（缺 0）
+  judgment: target=0, actual=0 → ❌ 全部舍弃
+  essay: target=0, actual=0 → ❌ 全部舍弃
+=== 最终题型统计（输出给前端）=== { single: 1, multiple: 1 }
+✓ 多模态API响应成功
+✓ AI返回长度: 367
+    ✓ 成功生成 1 道 single
+✓ 多模态API响应成功
+✓ AI返回长度: 549
+    ✓ 成功生成 1 道 multiple
+=== 生成完成（裁剪前），总共 2 道题目 ===
+=== 生成完成，总共 2 道题目 ===
+=== 最终数量调整 ===
+  single: target=1, actual=1 → ✓ 全部保留（缺 0）
+  multiple: target=1, actual=1 → ✓ 全部保留（缺 0）
+  judgment: target=0, actual=0 → ❌ 全部舍弃
+  essay: target=0, actual=0 → ❌ 全部舍弃
+=== 最终题型统计（输出给前端）=== { single: 1, multiple: 1 }
+✓ 多模态API响应成功
+✓ AI返回长度: 521
+    ✓ 成功生成 1 道 multiple
+✓ 多模态API响应成功
+✓ AI返回长度: 369
+    ✓ 成功生成 1 道 single
+=== 生成完成（裁剪前），总共 2 道题目 ===
+=== 生成完成，总共 2 道题目 ===
+=== 最终数量调整 ===
+  single: target=1, actual=1 → ✓ 全部保留（缺 0）
+  multiple: target=1, actual=1 → ✓ 全部保留（缺 0）
+  judgment: target=0, actual=0 → ❌ 全部舍弃
+  essay: target=0, actual=0 → ❌ 全部舍弃
+=== 最终题型统计（输出给前端）=== { single: 1, multiple: 1 }
+File check: name=æåèªTSG 07-2019 ç¹ç§è®¾å¤çäº§ååè£åä½è®¸å¯è§å-ä¿®æ¹çï¼å«1ã2å·ä¿®æ¹ååå®¹ï¼-å¸¦ç®å½.pdf, ext=.pdf, mime=application/pdf
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 2
+  -> Parsed from object multiple: 5
+=== Parsed result ===
+questionTypeCounts: { single: 2, multiple: 5 }
+targetCount: 7
+=== 文件分配计划 ===
+  文件 1 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf": 类型 text, 长度 10560, 分配题目 7 道
+=== 初始题型配额 === { single: 2, multiple: 5 }
+正在从 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf" 生成，总配额还剩: { single: 2, multiple: 5 }
+  本文件分配: { single: 2, multiple: 5 }
+  - 生成 single 2 题...
+  - 生成 multiple 5 题...
+    ✓ 成功生成 2 道 single
+    ✓ 成功生成 5 道 multiple
+=== 生成完成（裁剪前），总共 7 道题目 ===
+=== 生成完成，总共 7 道题目 ===
+=== 最终数量调整 ===
+  single: target=2, actual=2 → ✓ 全部保留（缺 0）
+  multiple: target=5, actual=5 → ✓ 全部保留（缺 0）
+  judgment: target=0, actual=0 → ❌ 全部舍弃
+  essay: target=0, actual=0 → ❌ 全部舍弃
+=== 最终题型统计（输出给前端）=== { single: 2, multiple: 5 }
+File check: name=20260323.pdf, ext=.pdf, mime=application/pdf
+✓ File accepted: extOk=true, mimeOk=true
+File check: name=æåèªTSG 07-2019 ç¹ç§è®¾å¤çäº§ååè£åä½è®¸å¯è§å-ä¿®æ¹çï¼å«1ã2å·ä¿®æ¹ååå®¹ï¼-å¸¦ç®å½.pdf, ext=.pdf, mime=application/pdf
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 1
+  -> Parsed from object judgment: 3
+=== Parsed result ===
+questionTypeCounts: { single: 1, judgment: 3 }
+targetCount: 4
+=== 文件分配计划 ===
+  文件 1 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf": 类型 text, 长度 10560, 分配题目 4 道
+=== 初始题型配额 === { single: 1, judgment: 3 }
+正在从 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf" 生成，总配额还剩: { single: 1, judgment: 3 }
+  本文件分配: { single: 1, judgment: 3 }
+  - 生成 single 1 题...
+  - 生成 judgment 3 题...
+    ✓ 成功生成 3 道 judgment
+    ✓ 成功生成 1 道 single
+=== 生成完成（裁剪前），总共 4 道题目 ===
+=== 生成完成，总共 4 道题目 ===
+=== 最终数量调整 ===
+  single: target=1, actual=1 → ✓ 全部保留（缺 0）
+  multiple: target=0, actual=0 → ❌ 全部舍弃
+  judgment: target=3, actual=3 → ✓ 全部保留（缺 0）
+  essay: target=0, actual=0 → ❌ 全部舍弃
+=== 最终题型统计（输出给前端）=== { single: 1, judgment: 3 }
+File check: name=æåèªTSG 07-2019 ç¹ç§è®¾å¤çäº§ååè£åä½è®¸å¯è§å-ä¿®æ¹çï¼å«1ã2å·ä¿®æ¹ååå®¹ï¼-å¸¦ç®å½.pdf, ext=.pdf, mime=application/pdf
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 2
+  -> Parsed from object judgment: 3
+=== Parsed result ===
+questionTypeCounts: { single: 2, judgment: 3 }
+targetCount: 5
+=== 文件分配计划 ===
+  文件 1 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf": 类型 text, 长度 10560, 分配题目 5 道
+=== 初始题型配额 === { single: 2, judgment: 3 }
+正在从 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf" 生成，总配额还剩: { single: 2, judgment: 3 }
+  本文件分配: { single: 2, judgment: 3 }
+  - 生成 single 2 题...
+  - 生成 judgment 3 题...
+    ✓ 成功生成 3 道 judgment
+    ✓ 成功生成 2 道 single
+=== 生成完成（裁剪前），总共 5 道题目 ===
+=== 生成完成，总共 5 道题目 ===
+=== 最终数量调整 ===
+  single: target=2, actual=2 → ✓ 全部保留（缺 0）
+  multiple: target=0, actual=0 → ❌ 全部舍弃
+  judgment: target=3, actual=3 → ✓ 全部保留（缺 0）
+  essay: target=0, actual=0 → ❌ 全部舍弃
+=== 最终题型统计（输出给前端）=== { single: 2, judgment: 3 }
+File check: name=1ããä¸­åäººæ°å±åå½ç¹ç§è®¾å¤å®å¨æ³ã.pdf, ext=.pdf, mime=application/pdf
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 2
+  -> Parsed from object judgment: 3
+=== Parsed result ===
+questionTypeCounts: { single: 2, judgment: 3 }
+targetCount: 5
+=== 文件分配计划 ===
+  文件 1 "1、《中华人民共和国特种设备安全法》.pdf": 类型 text, 长度 14641, 分配题目 5 道
+=== 初始题型配额 === { single: 2, judgment: 3 }
+正在从 "1、《中华人民共和国特种设备安全法》.pdf" 生成，总配额还剩: { single: 2, judgment: 3 }
+  本文件分配: { single: 2, judgment: 3 }
+  - 生成 single 2 题...
+  - 生成 judgment 3 题...
+    ✓ 成功生成 3 道 judgment
+    ✓ 成功生成 2 道 single
+=== 生成完成（裁剪前），总共 5 道题目 ===
+=== 生成完成，总共 5 道题目 ===
+=== 最终数量调整 ===
+  single: target=2, actual=2 → ✓ 全部保留（缺 0）
+  multiple: target=0, actual=0 → ❌ 全部舍弃
+  judgment: target=3, actual=3 → ✓ 全部保留（缺 0）
+  essay: target=0, actual=0 → ❌ 全部舍弃
+=== 最终题型统计（输出给前端）=== { single: 2, judgment: 3 }
+File check: name=æåèªTSG 07-2019 ç¹ç§è®¾å¤çäº§ååè£åä½è®¸å¯è§å-ä¿®æ¹çï¼å«1ã2å·ä¿®æ¹ååå®¹ï¼-å¸¦ç®å½.pdf, ext=.pdf, mime=application/pdf
+✓ File accepted: extOk=true, mimeOk=true
+=== Received request ===
+Files: 1
+  -> Parsed from object single: 2
+  -> Parsed from object judgment: 1
+=== Parsed result ===
+questionTypeCounts: { single: 2, judgment: 1 }
+targetCount: 3
+=== 文件分配计划 ===
+  文件 1 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf": 类型 text, 长度 10560, 分配题目 3 道
+=== 初始题型配额 === { single: 2, judgment: 1 }
+正在从 "提取自TSG 07-2019 特种设备生产和充装单位许可规则-修改版（含1、2号修改单内容）-带目录.pdf" 生成，总配额还剩: { single: 2, judgment: 1 }
+  本文件分配: { single: 2, judgment: 1 }
+  - 生成 single 2 题...
+  - 生成 judgment 1 题...
+    ✓ 成功生成 1 道 judgment
+    ✓ 成功生成 2 道 single
+=== 生成完成（裁剪前），总共 3 道题目 ===
+=== 生成完成，总共 3 道题目 ===
+=== 最终数量调整 ===
+  single: target=2, actual=2 → ✓ 全部保留（缺 0）
+  multiple: target=0, actual=0 → ❌ 全部舍弃
+  judgment: target=1, actual=1 → ✓ 全部保留（缺 0）
+  essay: target=0, actual=0 → ❌ 全部舍弃
+=== 最终题型统计（输出给前端）=== { single: 2, judgment: 1 }

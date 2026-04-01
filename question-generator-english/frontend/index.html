@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Question Generator - Generate Exam Questions from Documents</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📝 AI Question Generator</h1>
+      <p>Upload Word/PDF/Excel documents, automatically generate exam questions</p>
+    </header>
+
+    <main>
+      <!-- Upload Area -->
+      <section class="upload-section">
+        <div id="dropZone" class="drop-zone">
+          <div class="drop-zone-content">
+            <div class="icon">📁</div>
+            <p>Drag files here or click to select</p>
+            <p class="hint">Supports PDF, Word(.doc/.docx), Excel(.xls/.xlsx), Txt, JPG, PNG, GIF images (scan and generate directly)</p>
+            <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.webp,.bmp" multiple hidden>
+          </div>
+        </div>
+        <div id="fileInfo" class="file-info" style="display: none;">
+          <span id="fileName"></span>
+          <button id="removeFile" class="btn-remove">✕</button>
+        </div>
+      </section>
+
+      <!-- Configuration -->
+      <section class="config-section">
+        <div class="form-group">
+          <label>Question Types (check to enable, enter custom count)</label>
+          <div class="checkbox-group custom-count-group">
+            <label>
+              <input type="checkbox" name="questionTypes" value="single" checked class="type-checkbox">
+              Single Choice
+              <input type="number" name="singleCount" min="0" max="50" value="10" class="type-count-input">
+            </label>
+            <label>
+              <input type="checkbox" name="questionTypes" value="multiple" class="type-checkbox">
+              Multiple Choice
+              <input type="number" name="multipleCount" min="0" max="50" value="5" class="type-count-input">
+            </label>
+            <label>
+              <input type="checkbox" name="questionTypes" value="judgment" class="type-checkbox">
+              True/False
+              <input type="number" name="judgmentCount" min="0" max="50" value="3" class="type-count-input">
+            </label>
+            <label>
+              <input type="checkbox" name="questionTypes" value="essay" class="type-checkbox">
+              Essay
+              <input type="number" name="essayCount" min="0" max="50" value="2" class="type-count-input">
+            </label>
+          </div>
+          <div class="total-count-info">Total Questions: <span id="totalCount">10</span></div>
+        </div>
+
+        <div id="fileRatioGroup" class="form-group" style="display: none;">
+          <label>Question distribution for multiple files (<span id="fileCountDisplay">0</span> files selected)</label>
+          <div id="fileRatioInputs" class="file-ratio-group">
+            <!-- Dynamic generated -->
+          </div>
+          <p class="hint">Proportions will be normalized automatically, leave blank for auto distribution by content length</p>
+        </div>
+
+        <div class="form-group">
+          <label>Difficulty</label>
+          <div class="radio-group">
+            <label><input type="radio" name="difficulty" value="easy"> Easy</label>
+            <label><input type="radio" name="difficulty" value="medium" checked> Medium</label>
+            <label><input type="radio" name="difficulty" value="hard"> Hard</label>
+          </div>
+        </div>
+
+        <button id="generateBtn" class="btn-generate" disabled>
+          <span id="generateText">Please upload a file first</span>
+          <span id="generateLoading" class="loading" style="display: none;">Generating...</span>
+        </button>
+      </section>
+
+      <!-- Result Section -->
+      <section id="resultSection" class="result-section" style="display: none;">
+        <div class="result-header">
+          <h2>Generated Result</h2>
+          <div class="result-actions">
+            <button id="startExamBtn" class="btn-start-exam">Start Exam</button>
+            <button id="viewResultsBtn" class="btn-view-results" style="display: none;" onclick="openResultPage()">📊 View Results</button>
+            <button id="toggleAnswers" class="btn-toggle-answers">Show Answers</button>
+            <button id="printBtn" class="btn-print">Print</button>
+            <button id="exportTxt" class="btn-export">Export TXT</button>
+            <button id="exportXlsx" class="btn-export">Export Excel</button>
+          </div>
+        </div>
+        <div id="questionsList" class="questions-list"></div>
+      </section>
+
+      <!-- Error Toast -->
+      <div id="errorToast" class="error-toast" style="display: none;"></div>
+    </main>
+
+    <footer>
+      <p>Powered by AI</p>
+    </footer>
+  </div>
+
+  <!-- Exam Mode Container -->
+  <div id="examMode" class="exam-mode">
+    <div class="exam-container">
+      <div class="exam-header">
+        <div class="exam-title">Online Exam</div>
+        <button id="closeExam" class="exam-close">Exit</button>
+      </div>
+      <div id="examContent"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
